@@ -859,10 +859,12 @@
         "title": "Growatt options",
         "description": "Tweak how this integration polls the Growatt API.",
         "data": {
-          "scan_interval_minutes": "Polling interval (minutes)"
+          "scan_interval_minutes": "Live polling interval (minutes)",
+          "slow_scan_interval_minutes": "Energy / settings polling interval (minutes)"
         },
         "data_description": {
-          "scan_interval_minutes": "How often to fetch fresh data from Growatt (1–60). Lower values give fresher data but increase API load — the default of 5 matches the Growatt API's per-endpoint rate-limit window."
+          "scan_interval_minutes": "How often to refresh live snapshot values — instantaneous power, voltage, frequency, SoC. Lower is fresher but uses more API calls. The Growatt cloud refreshes ~once per minute upstream, so values below 1 don't help. Range 1–60.",
+          "slow_scan_interval_minutes": "How often to refresh slow-changing data — kWh totals, settings, chart aggregates. Cached between refreshes and served at the live cadence. Default 5 matches the per-endpoint rate-limit window. Range 1–60."
         }
       }
     }

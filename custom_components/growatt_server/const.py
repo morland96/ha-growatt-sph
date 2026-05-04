@@ -5,13 +5,28 @@ from homeassistant.const import Platform
 CONF_PLANT_ID = "plant_id"
 CONF_REGION = "region"
 
-# Polling interval (minutes). Configurable via the integration's
-# Options flow; default 5 matches the previous hardcoded value and the
-# Growatt classic API's per-endpoint rate-limit window.
+# Polling intervals (minutes). Configurable via the integration's
+# Options flow.
+#
+# scan_interval_minutes — the master polling cadence; determines how
+# often live snapshot values (instantaneous power, voltage, frequency,
+# SoC) are refreshed. Default 5 matches the previous hardcoded value.
+#
+# slow_scan_interval_minutes — refresh cadence for slow-changing data:
+# daily/lifetime kWh totals, settings, and chart aggregates. The
+# coordinator caches the slow values between refreshes and serves them
+# at the fast cadence to HA. Setting slow == fast disables the cache
+# (every poll fetches everything). Default 5 — tune slow up if you
+# drop the fast interval below 2 min, to keep the API request count
+# under the per-endpoint rate-limit window.
 CONF_SCAN_INTERVAL_MINUTES = "scan_interval_minutes"
 DEFAULT_SCAN_INTERVAL_MINUTES = 5
 MIN_SCAN_INTERVAL_MINUTES = 1
 MAX_SCAN_INTERVAL_MINUTES = 60
+CONF_SLOW_SCAN_INTERVAL_MINUTES = "slow_scan_interval_minutes"
+DEFAULT_SLOW_SCAN_INTERVAL_MINUTES = 5
+MIN_SLOW_SCAN_INTERVAL_MINUTES = 1
+MAX_SLOW_SCAN_INTERVAL_MINUTES = 60
 
 
 # API key support

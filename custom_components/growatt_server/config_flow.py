@@ -32,14 +32,18 @@ from .const import (
     CONF_PLANT_ID,
     CONF_REGION,
     CONF_SCAN_INTERVAL_MINUTES,
+    CONF_SLOW_SCAN_INTERVAL_MINUTES,
     DEFAULT_SCAN_INTERVAL_MINUTES,
+    DEFAULT_SLOW_SCAN_INTERVAL_MINUTES,
     DEFAULT_URL,
     DOMAIN,
     ERROR_CANNOT_CONNECT,
     ERROR_INVALID_AUTH,
     LOGIN_INVALID_AUTH_CODE,
     MAX_SCAN_INTERVAL_MINUTES,
+    MAX_SLOW_SCAN_INTERVAL_MINUTES,
     MIN_SCAN_INTERVAL_MINUTES,
+    MIN_SLOW_SCAN_INTERVAL_MINUTES,
     SERVER_URLS_NAMES,
     V1_API_ERROR_NO_PRIVILEGE,
 )
@@ -453,18 +457,30 @@ class GrowattServerOptionsFlow(OptionsFlow):
         if user_input is not None:
             return self.async_create_entry(data=user_input)
 
-        current = self.config_entry.options.get(
+        current_fast = self.config_entry.options.get(
             CONF_SCAN_INTERVAL_MINUTES, DEFAULT_SCAN_INTERVAL_MINUTES
+        )
+        current_slow = self.config_entry.options.get(
+            CONF_SLOW_SCAN_INTERVAL_MINUTES, DEFAULT_SLOW_SCAN_INTERVAL_MINUTES
         )
         schema = vol.Schema(
             {
                 vol.Required(
-                    CONF_SCAN_INTERVAL_MINUTES, default=current
+                    CONF_SCAN_INTERVAL_MINUTES, default=current_fast
                 ): vol.All(
                     vol.Coerce(int),
                     vol.Range(
                         min=MIN_SCAN_INTERVAL_MINUTES,
                         max=MAX_SCAN_INTERVAL_MINUTES,
+                    ),
+                ),
+                vol.Required(
+                    CONF_SLOW_SCAN_INTERVAL_MINUTES, default=current_slow
+                ): vol.All(
+                    vol.Coerce(int),
+                    vol.Range(
+                        min=MIN_SLOW_SCAN_INTERVAL_MINUTES,
+                        max=MAX_SLOW_SCAN_INTERVAL_MINUTES,
                     ),
                 ),
             }

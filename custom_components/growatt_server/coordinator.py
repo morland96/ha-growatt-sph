@@ -24,7 +24,9 @@ from .const import (
     BATT_MODE_GRID_FIRST,
     BATT_MODE_LOAD_FIRST,
     CONF_SCAN_INTERVAL_MINUTES,
+    CONF_SLOW_SCAN_INTERVAL_MINUTES,
     DEFAULT_SCAN_INTERVAL_MINUTES,
+    DEFAULT_SLOW_SCAN_INTERVAL_MINUTES,
     DEFAULT_URL,
     DOMAIN,
     LOGIN_INVALID_AUTH_CODE,
@@ -60,6 +62,16 @@ class GrowattCoordinator(DataUpdateCoordinator[dict[str, Any]]):
         self.plant_id = plant_id
         self.previous_values: dict[str, Any] = {}
         self._pre_reset_values: dict[str, float] = {}
+        # Cache for slow-cadence data (totals, settings, chart aggregates)
+        # so we can refresh live status more often without hitting the
+        # API rate limit on every poll.
+        self._slow_interval_minutes = int(
+            config_entry.options.get(
+                CONF_SLOW_SCAN_INTERVAL_MINUTES, DEFAULT_SLOW_SCAN_INTERVAL_MINUTES
+            )
+        )
+        self._cached_slow_data: dict[str, Any] = {}
+        self._last_slow_refresh: datetime.datetime | None = None
 
         if self.api_version == "v1":
             self.username = None
@@ -211,33 +223,46 @@ class GrowattCoordinator(DataUpdateCoordinator[dict[str, Any]]):
                 # Classic API path — regional mobile endpoints
                 # (newTwoSphAPI.do). Required for newer SPH/SPM models
                 # like SPM-10000TL-HU which V1 does not expose.
+                #
+                # Always refresh sph_system_status (the live snapshot
+                # used by the power sensors). The kWh totals, settings,
+                # and chart-derived values change much more slowly so
+                # we cache them and only refresh on the slow cadence.
                 sph_status = self.api.sph_system_status(
                     self.plant_id, self.device_id
                 )
-                sph_overview = self.api.sph_energy_overview(
-                    self.plant_id, self.device_id
+
+                now = datetime.datetime.now(datetime.UTC)
+                slow_due = self._last_slow_refresh is None or (
+                    (now - self._last_slow_refresh).total_seconds() / 60.0
+                    >= self._slow_interval_minutes
                 )
-                # Settings bean — exposes ~149 adjustable parameters such
-                # as sys_work_mode, cutoff_soc, cuton_soc, zero export
-                # flags, charge/discharge current limits, etc. Used by
-                # diagnostic sensors and the set_sph_parameter service.
-                sph_settings = self.api.sph_settings(self.device_id)
-                # Grid-import kWh (etouser) is not in sph_energy_overview;
-                # pull it from the chart endpoint. chart_type=0 → today,
-                # chart_type=3 → lifetime.
-                etouser_today = self.api.sph_energy_prod_and_cons(
-                    self.plant_id, self.device_id, chart_type=0
-                ).get("etouser")
-                etouser_total = self.api.sph_energy_prod_and_cons(
-                    self.plant_id, self.device_id, chart_type=3
-                ).get("etouser")
-                self.data = {
-                    **sph_status,
-                    **sph_overview,
-                    **sph_settings,
-                    "etouserToday": etouser_today,
-                    "etouserTotal": etouser_total,
-                }
+                if slow_due:
+                    sph_overview = self.api.sph_energy_overview(
+                        self.plant_id, self.device_id
+                    )
+                    # Settings bean — ~149 adjustable parameters used by
+                    # the diagnostic sensors and the set_sph_parameter
+                    # service.
+                    sph_settings = self.api.sph_settings(self.device_id)
+                    # Grid-import kWh (etouser) is missing from
+                    # sph_energy_overview; pull it from the chart
+                    # endpoint. chart_type=0 → today, 3 → lifetime.
+                    etouser_today = self.api.sph_energy_prod_and_cons(
+                        self.plant_id, self.device_id, chart_type=0
+                    ).get("etouser")
+                    etouser_total = self.api.sph_energy_prod_and_cons(
+                        self.plant_id, self.device_id, chart_type=3
+                    ).get("etouser")
+                    self._cached_slow_data = {
+                        **sph_overview,
+                        **sph_settings,
+                        "etouserToday": etouser_today,
+                        "etouserTotal": etouser_total,
+                    }
+                    self._last_slow_refresh = now
+
+                self.data = {**sph_status, **self._cached_slow_data}
             _LOGGER.debug(
                 "sph_info for device %s: %r", self.device_id, self.data
             )
