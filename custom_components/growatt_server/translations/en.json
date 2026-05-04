@@ -1,11 +1,11 @@
 {
   "config": {
     "abort": {
-      "already_configured": "[%key:common::config_flow::abort::already_configured_device%]",
-      "cannot_connect": "[%key:common::config_flow::error::cannot_connect%]",
+      "already_configured": "Device is already configured",
+      "cannot_connect": "Failed to connect",
       "no_plants": "No plants have been found on this account",
-      "reauth_successful": "[%key:common::config_flow::abort::reauth_successful%]",
-      "reconfigure_successful": "[%key:common::config_flow::abort::reconfigure_successful%]"
+      "reauth_successful": "Re-authentication was successful",
+      "reconfigure_successful": "Reconfiguration was successful"
     },
     "error": {
       "cannot_connect": "Cannot connect to Growatt servers. Please check your internet connection and try again.",
@@ -14,9 +14,9 @@
     "step": {
       "password_auth": {
         "data": {
-          "password": "[%key:common::config_flow::data::password%]",
+          "password": "Password",
           "region": "Server region",
-          "username": "[%key:common::config_flow::data::username%]"
+          "username": "Username"
         },
         "data_description": {
           "password": "The password for your Growatt account.",
@@ -36,43 +36,43 @@
       },
       "reauth_confirm": {
         "data": {
-          "password": "[%key:common::config_flow::data::password%]",
-          "region": "[%key:component::growatt_server::config::step::password_auth::data::region%]",
-          "token": "[%key:component::growatt_server::config::step::token_auth::data::token%]",
-          "username": "[%key:common::config_flow::data::username%]"
+          "password": "Password",
+          "region": "Server region",
+          "token": "API token",
+          "username": "Username"
         },
         "data_description": {
-          "password": "[%key:component::growatt_server::config::step::password_auth::data_description::password%]",
-          "region": "[%key:component::growatt_server::config::step::password_auth::data_description::region%]",
-          "token": "[%key:component::growatt_server::config::step::token_auth::data_description::token%]",
-          "username": "[%key:component::growatt_server::config::step::password_auth::data_description::username%]"
+          "password": "The password for your Growatt account.",
+          "region": "The server region that matches your Growatt account location.",
+          "token": "The API token for your Growatt account. You can generate one via the Growatt web portal or ShinePhone app.",
+          "username": "The email address or username for your Growatt account."
         },
         "description": "Re-enter your credentials to continue using this integration.",
         "title": "Re-authenticate with Growatt"
       },
       "reconfigure": {
         "data": {
-          "password": "[%key:common::config_flow::data::password%]",
-          "region": "[%key:component::growatt_server::config::step::password_auth::data::region%]",
-          "token": "[%key:component::growatt_server::config::step::token_auth::data::token%]",
-          "username": "[%key:common::config_flow::data::username%]"
+          "password": "Password",
+          "region": "Server region",
+          "token": "API token",
+          "username": "Username"
         },
         "data_description": {
-          "password": "[%key:component::growatt_server::config::step::password_auth::data_description::password%]",
-          "region": "[%key:component::growatt_server::config::step::password_auth::data_description::region%]",
-          "token": "[%key:component::growatt_server::config::step::token_auth::data_description::token%]",
-          "username": "[%key:component::growatt_server::config::step::password_auth::data_description::username%]"
+          "password": "The password for your Growatt account.",
+          "region": "The server region that matches your Growatt account location.",
+          "token": "The API token for your Growatt account. You can generate one via the Growatt web portal or ShinePhone app.",
+          "username": "The email address or username for your Growatt account."
         },
         "description": "Update your credentials to continue using this integration.",
         "title": "Reconfigure Growatt"
       },
       "token_auth": {
         "data": {
-          "region": "[%key:component::growatt_server::config::step::password_auth::data::region%]",
+          "region": "Server region",
           "token": "API token"
         },
         "data_description": {
-          "region": "[%key:component::growatt_server::config::step::password_auth::data_description::region%]",
+          "region": "The server region that matches your Growatt account location.",
           "token": "The API token for your Growatt account. You can generate one via the Growatt web portal or ShinePhone app."
         },
         "description": "Token authentication is only supported for MIN/SPH devices. For other device types, please use username/password authentication.",
@@ -327,7 +327,7 @@
         "name": "AC input voltage"
       },
       "storage_import_from_grid": {
-        "name": "[%key:component::growatt_server::entity::sensor::mix_import_from_grid::name%]"
+        "name": "Import from grid"
       },
       "storage_import_from_grid_today": {
         "name": "Import from grid today"
@@ -336,16 +336,16 @@
         "name": "Import from grid total"
       },
       "storage_load_consumption": {
-        "name": "[%key:component::growatt_server::entity::sensor::mix_load_consumption::name%]"
+        "name": "Load consumption"
       },
       "storage_load_consumption_lifetime": {
-        "name": "[%key:component::growatt_server::entity::sensor::mix_load_consumption_lifetime::name%]"
+        "name": "Lifetime load consumption"
       },
       "storage_load_consumption_solar_storage": {
         "name": "Load consumption (solar + storage)"
       },
       "storage_load_consumption_today": {
-        "name": "[%key:component::growatt_server::entity::sensor::mix_load_consumption_today::name%]"
+        "name": "Load consumption today"
       },
       "storage_load_percentage": {
         "name": "Load percentage"
@@ -393,13 +393,13 @@
         "name": "Lifetime total all batteries discharged"
       },
       "tlx_amperage_input_1": {
-        "name": "[%key:component::growatt_server::entity::sensor::inverter_amperage_input_1::name%]"
+        "name": "Input 1 amperage"
       },
       "tlx_amperage_input_2": {
-        "name": "[%key:component::growatt_server::entity::sensor::inverter_amperage_input_2::name%]"
+        "name": "Input 2 amperage"
       },
       "tlx_amperage_input_3": {
-        "name": "[%key:component::growatt_server::entity::sensor::inverter_amperage_input_3::name%]"
+        "name": "Input 3 amperage"
       },
       "tlx_amperage_input_4": {
         "name": "Input 4 amperage"
@@ -435,7 +435,7 @@
         "name": "Battery 2 discharging W"
       },
       "tlx_current_wattage": {
-        "name": "[%key:component::growatt_server::entity::sensor::inverter_current_wattage::name%]"
+        "name": "Output power"
       },
       "tlx_energy_today": {
         "name": "Energy today"
@@ -453,7 +453,7 @@
         "name": "Energy today input 4"
       },
       "tlx_energy_total": {
-        "name": "[%key:component::growatt_server::entity::sensor::inverter_energy_total::name%]"
+        "name": "Lifetime energy output"
       },
       "tlx_energy_total_input_1": {
         "name": "Lifetime total energy input 1"
@@ -468,13 +468,13 @@
         "name": "Lifetime total energy input 4"
       },
       "tlx_export_to_grid_today": {
-        "name": "[%key:component::growatt_server::entity::sensor::mix_export_to_grid_today::name%]"
+        "name": "Export to grid today"
       },
       "tlx_export_to_grid_total": {
         "name": "Lifetime total export to grid"
       },
       "tlx_frequency": {
-        "name": "[%key:component::growatt_server::entity::sensor::inverter_frequency::name%]"
+        "name": "AC frequency"
       },
       "tlx_import_from_grid_today": {
         "name": "Import from grid today"
@@ -483,10 +483,10 @@
         "name": "Lifetime import from grid"
       },
       "tlx_internal_wattage": {
-        "name": "[%key:component::growatt_server::entity::sensor::inverter_internal_wattage::name%]"
+        "name": "Internal wattage"
       },
       "tlx_load_consumption_today": {
-        "name": "[%key:component::growatt_server::entity::sensor::mix_load_consumption_today::name%]"
+        "name": "Load consumption today"
       },
       "tlx_p_self": {
         "name": "Self power"
@@ -504,7 +504,7 @@
         "name": "Import power"
       },
       "tlx_reactive_voltage": {
-        "name": "[%key:component::growatt_server::entity::sensor::inverter_reactive_voltage::name%]"
+        "name": "Reactive voltage"
       },
       "tlx_self_consumption_today": {
         "name": "Self consumption today"
@@ -543,31 +543,31 @@
         "name": "Temperature 5"
       },
       "tlx_voltage_input_1": {
-        "name": "[%key:component::growatt_server::entity::sensor::inverter_voltage_input_1::name%]"
+        "name": "Input 1 voltage"
       },
       "tlx_voltage_input_2": {
-        "name": "[%key:component::growatt_server::entity::sensor::inverter_voltage_input_2::name%]"
+        "name": "Input 2 voltage"
       },
       "tlx_voltage_input_3": {
-        "name": "[%key:component::growatt_server::entity::sensor::inverter_voltage_input_3::name%]"
+        "name": "Input 3 voltage"
       },
       "tlx_voltage_input_4": {
         "name": "Input 4 voltage"
       },
       "tlx_wattage_input_1": {
-        "name": "[%key:component::growatt_server::entity::sensor::inverter_wattage_input_1::name%]"
+        "name": "Input 1 wattage"
       },
       "tlx_wattage_input_2": {
-        "name": "[%key:component::growatt_server::entity::sensor::inverter_wattage_input_2::name%]"
+        "name": "Input 2 wattage"
       },
       "tlx_wattage_input_3": {
-        "name": "[%key:component::growatt_server::entity::sensor::inverter_wattage_input_3::name%]"
+        "name": "Input 3 wattage"
       },
       "tlx_wattage_input_4": {
         "name": "Input 4 wattage"
       },
       "total_energy_output": {
-        "name": "[%key:component::growatt_server::entity::sensor::inverter_energy_total::name%]"
+        "name": "Lifetime energy output"
       },
       "total_energy_today": {
         "name": "Energy today"
@@ -665,8 +665,8 @@
       "description": "Reads AC charge time periods from an SPH device.",
       "fields": {
         "device_id": {
-          "description": "[%key:component::growatt_server::services::read_time_segments::fields::device_id::description%]",
-          "name": "[%key:component::growatt_server::services::read_time_segments::fields::device_id::name%]"
+          "description": "The Growatt device to perform the action on.",
+          "name": "Device"
         }
       },
       "name": "Read AC charge times"
@@ -675,8 +675,8 @@
       "description": "Reads AC discharge time periods from an SPH device.",
       "fields": {
         "device_id": {
-          "description": "[%key:component::growatt_server::services::read_time_segments::fields::device_id::description%]",
-          "name": "[%key:component::growatt_server::services::read_time_segments::fields::device_id::name%]"
+          "description": "The Growatt device to perform the action on.",
+          "name": "Device"
         }
       },
       "name": "Read AC discharge times"
@@ -699,8 +699,8 @@
           "name": "Battery mode"
         },
         "device_id": {
-          "description": "[%key:component::growatt_server::services::read_time_segments::fields::device_id::description%]",
-          "name": "[%key:component::growatt_server::services::read_time_segments::fields::device_id::name%]"
+          "description": "The Growatt device to perform the action on.",
+          "name": "Device"
         },
         "enabled": {
           "description": "Whether this time segment is active.",
@@ -733,8 +733,8 @@
           "name": "Charge stop SOC"
         },
         "device_id": {
-          "description": "[%key:component::growatt_server::services::read_time_segments::fields::device_id::description%]",
-          "name": "[%key:component::growatt_server::services::read_time_segments::fields::device_id::name%]"
+          "description": "The Growatt device to perform the action on.",
+          "name": "Device"
         },
         "mains_enabled": {
           "description": "Enable AC (mains) charging.",
@@ -783,8 +783,8 @@
       "description": "Writes AC discharge time periods to an SPH device.",
       "fields": {
         "device_id": {
-          "description": "[%key:component::growatt_server::services::read_time_segments::fields::device_id::description%]",
-          "name": "[%key:component::growatt_server::services::read_time_segments::fields::device_id::name%]"
+          "description": "The Growatt device to perform the action on.",
+          "name": "Device"
         },
         "discharge_power": {
           "description": "Discharge power limit (%).",
@@ -795,40 +795,40 @@
           "name": "Discharge stop SOC"
         },
         "period_1_enabled": {
-          "description": "[%key:component::growatt_server::services::write_ac_charge_times::fields::period_1_enabled::description%]",
-          "name": "[%key:component::growatt_server::services::write_ac_charge_times::fields::period_1_enabled::name%]"
+          "description": "Enable time period 1.",
+          "name": "Period 1 enabled"
         },
         "period_1_end": {
-          "description": "[%key:component::growatt_server::services::write_ac_charge_times::fields::period_1_end::description%]",
-          "name": "[%key:component::growatt_server::services::write_ac_charge_times::fields::period_1_end::name%]"
+          "description": "End time for period 1 (HH:MM or HH:MM:SS).",
+          "name": "Period 1 end"
         },
         "period_1_start": {
-          "description": "[%key:component::growatt_server::services::write_ac_charge_times::fields::period_1_start::description%]",
-          "name": "[%key:component::growatt_server::services::write_ac_charge_times::fields::period_1_start::name%]"
+          "description": "Start time for period 1 (HH:MM or HH:MM:SS).",
+          "name": "Period 1 start"
         },
         "period_2_enabled": {
-          "description": "[%key:component::growatt_server::services::write_ac_charge_times::fields::period_2_enabled::description%]",
-          "name": "[%key:component::growatt_server::services::write_ac_charge_times::fields::period_2_enabled::name%]"
+          "description": "Enable time period 2.",
+          "name": "Period 2 enabled"
         },
         "period_2_end": {
-          "description": "[%key:component::growatt_server::services::write_ac_charge_times::fields::period_2_end::description%]",
-          "name": "[%key:component::growatt_server::services::write_ac_charge_times::fields::period_2_end::name%]"
+          "description": "End time for period 2 (HH:MM or HH:MM:SS).",
+          "name": "Period 2 end"
         },
         "period_2_start": {
-          "description": "[%key:component::growatt_server::services::write_ac_charge_times::fields::period_2_start::description%]",
-          "name": "[%key:component::growatt_server::services::write_ac_charge_times::fields::period_2_start::name%]"
+          "description": "Start time for period 2 (HH:MM or HH:MM:SS).",
+          "name": "Period 2 start"
         },
         "period_3_enabled": {
-          "description": "[%key:component::growatt_server::services::write_ac_charge_times::fields::period_3_enabled::description%]",
-          "name": "[%key:component::growatt_server::services::write_ac_charge_times::fields::period_3_enabled::name%]"
+          "description": "Enable time period 3.",
+          "name": "Period 3 enabled"
         },
         "period_3_end": {
-          "description": "[%key:component::growatt_server::services::write_ac_charge_times::fields::period_3_end::description%]",
-          "name": "[%key:component::growatt_server::services::write_ac_charge_times::fields::period_3_end::name%]"
+          "description": "End time for period 3 (HH:MM or HH:MM:SS).",
+          "name": "Period 3 end"
         },
         "period_3_start": {
-          "description": "[%key:component::growatt_server::services::write_ac_charge_times::fields::period_3_start::description%]",
-          "name": "[%key:component::growatt_server::services::write_ac_charge_times::fields::period_3_start::name%]"
+          "description": "Start time for period 3 (HH:MM or HH:MM:SS).",
+          "name": "Period 3 start"
         }
       },
       "name": "Write AC discharge times"
