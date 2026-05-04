@@ -127,8 +127,9 @@ def _all_params_overlapped(obj: dict[str, Any]) -> dict[str, Any]:
         "pacToUser": _w_to_kw(grd.get("pacToUser")),
         "eToGridToday": grd.get("etoGridToday"),
         "eToGridTotal": grd.get("etoGridTotal"),
-        "etouserToday": grd.get("etoUserToday"),
-        "etouserTotal": grd.get("etoUserTotal"),
+        # Note: grid.etoUserToday/etoUserTotal exist here too but
+        # disagree with the ShinePhone UI; coordinator sources those
+        # from the getEnergyProdAndConsData chart endpoint instead.
         # Inverter
         "status": inv.get("status"),
         "sys_work_mode": inv.get("uwSysWorkMode"),
@@ -354,32 +355,31 @@ class GrowattCoordinator(DataUpdateCoordinator[dict[str, Any]]):
                     # Always merge detailed-only fields so those
                     # sensors populate regardless of the source choice.
                     slow.update(_all_params_detailed_only(all_params))
-                    # Cache the overlapped fields too so they're
-                    # available when the source picker is set to
-                    # "detailed" — they refresh at slow cadence then.
+                    # Cache overlapped fields so detailed mode can layer
+                    # them on top of sph_system_status below.
                     slow["__overlapped_from_all_params"] = (
                         _all_params_overlapped(all_params)
                     )
-                    if not detailed_source:
-                        # Grid-import kWh (etouser) is missing from
-                        # sph_energy_overview; pull it from the chart
-                        # endpoint. chart_type=0 → today, 3 → lifetime.
-                        # Pass HA's configured local date — the API
-                        # treats the date string in the plant's local
-                        # timezone, not UTC.
-                        today_local = dt_util.now().date()
-                        slow["etouserToday"] = self.api.sph_energy_prod_and_cons(
-                            self.plant_id,
-                            self.device_id,
-                            date=today_local,
-                            chart_type=0,
-                        ).get("etouser")
-                        slow["etouserTotal"] = self.api.sph_energy_prod_and_cons(
-                            self.plant_id,
-                            self.device_id,
-                            date=today_local,
-                            chart_type=3,
-                        ).get("etouser")
+                    # Grid-import kWh (etouser) — sph_all_params'
+                    # grid.etoUserTotal disagrees with what the
+                    # ShinePhone UI reports; the chart endpoint matches
+                    # the UI, so it's the source of truth here for both
+                    # source modes. chart_type=0 → today, 3 → lifetime.
+                    # Pass HA's local date — the API treats the date in
+                    # plant-local timezone, not UTC.
+                    today_local = dt_util.now().date()
+                    slow["etouserToday"] = self.api.sph_energy_prod_and_cons(
+                        self.plant_id,
+                        self.device_id,
+                        date=today_local,
+                        chart_type=0,
+                    ).get("etouser")
+                    slow["etouserTotal"] = self.api.sph_energy_prod_and_cons(
+                        self.plant_id,
+                        self.device_id,
+                        date=today_local,
+                        chart_type=3,
+                    ).get("etouser")
                     self._cached_slow_data = slow
                     self._last_slow_refresh = now
 
