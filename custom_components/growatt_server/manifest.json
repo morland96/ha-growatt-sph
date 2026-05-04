@@ -1,0 +1,15 @@
+{
+  "domain": "growatt_server",
+  "name": "Growatt (with SPH classic support)",
+  "codeowners": ["@morland96"],
+  "config_flow": true,
+  "documentation": "https://github.com/morland96/PyPi_GrowattServer",
+  "integration_type": "hub",
+  "iot_class": "cloud_polling",
+  "loggers": ["growattServer"],
+  "quality_scale": "silver",
+  "requirements": [
+    "growattServer @ git+https://github.com/morland96/PyPi_GrowattServer.git@v2.1.0+sph-classic.1"
+  ],
+  "version": "2.1.1"
+}
