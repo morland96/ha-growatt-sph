@@ -65,6 +65,7 @@ def _all_params_detailed_only(obj: dict[str, Any]) -> dict[str, Any]:
     """
     bat = obj.get("battery", {}) or {}
     sol = obj.get("solar", {}) or {}
+    grd = obj.get("grid", {}) or {}
     inv = obj.get("inverter", {}) or {}
     ld = obj.get("load", {}) or {}
     return {
@@ -73,6 +74,7 @@ def _all_params_detailed_only(obj: dict[str, Any]) -> dict[str, Any]:
         "ipv1": sol.get("ipv1"),
         "ipv2": sol.get("ipv2"),
         "ipv3": sol.get("ipv3"),
+        "gridStatus": grd.get("gridStatus"),
         "invTemp": inv.get("invTemp"),
         "dcTemp": inv.get("dcTemp"),
         "upsPac1": _w_to_kw(inv.get("upsPac1")),

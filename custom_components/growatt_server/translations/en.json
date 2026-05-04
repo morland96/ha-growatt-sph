@@ -667,6 +667,9 @@
       },
       "sph_inverter_output_current": {
         "name": "Inverter output current"
+      },
+      "sph_grid_status": {
+        "name": "Grid status"
       }
     },
     "switch": {
