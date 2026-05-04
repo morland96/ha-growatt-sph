@@ -55,16 +55,39 @@ def _w_to_kw(value: Any) -> float | None:
         return None
 
 
-def _transform_sph_all_params(obj: dict[str, Any]) -> dict[str, Any]:
-    """Flatten sph_all_params into the same flat shape as sph_system_status.
+def _all_params_detailed_only(obj: dict[str, Any]) -> dict[str, Any]:
+    """Extract sph_all_params fields that have no sph_system_status equivalent.
 
-    The SPH all-params endpoint returns nested groups (battery, solar,
-    grid, inverter, load) with field names that occasionally differ
-    from sph_system_status, and reports power values in watts where
-    sph_system_status uses kilowatts. Normalise both so existing
-    sensors can consume either source transparently. Extra fields not
-    available in standard mode are surfaced under their original
-    keys so the new diagnostic sensors can read them.
+    These populate the detailed-only sensors (temperatures, per-string
+    PV currents, backup output, load voltage). They're always merged
+    into the coordinator data when sph_all_params is fetched, regardless
+    of which source the user selected for the overlapped fields.
+    """
+    bat = obj.get("battery", {}) or {}
+    sol = obj.get("solar", {}) or {}
+    inv = obj.get("inverter", {}) or {}
+    ld = obj.get("load", {}) or {}
+    return {
+        "bmsBatteryTemp": bat.get("bmsBatteryTemp"),
+        "bmsBatteryCurr": bat.get("bmsBatteryCurr"),
+        "ipv1": sol.get("ipv1"),
+        "ipv2": sol.get("ipv2"),
+        "ipv3": sol.get("ipv3"),
+        "invTemp": inv.get("invTemp"),
+        "dcTemp": inv.get("dcTemp"),
+        "upsPac1": _w_to_kw(inv.get("upsPac1")),
+        "epsIac1": inv.get("epsIac1"),
+        "rLoadVol": ld.get("rLoadVol"),
+    }
+
+
+def _all_params_overlapped(obj: dict[str, Any]) -> dict[str, Any]:
+    """Extract overlapped sph_all_params fields in the sph_system_status shape.
+
+    The SPH all-params endpoint reports power values in watts where
+    sph_system_status uses kilowatts, and uses occasionally different
+    field names (gridVol vs vAc1, pDischarge1 vs pDisCharge1, etc.).
+    Normalise so existing sensors can consume either source.
     """
     bat = obj.get("battery", {}) or {}
     sol = obj.get("solar", {}) or {}
@@ -72,7 +95,7 @@ def _transform_sph_all_params(obj: dict[str, Any]) -> dict[str, Any]:
     inv = obj.get("inverter", {}) or {}
     ld = obj.get("load", {}) or {}
 
-    # Total PV power: sph_all_params doesn't include it, so synthesise.
+    # sph_all_params doesn't include a total PV power field, synthesise.
     p1 = sol.get("ppv1") or 0
     p2 = sol.get("ppv2") or 0
     p3 = sol.get("ppv3") or 0
@@ -113,17 +136,6 @@ def _transform_sph_all_params(obj: dict[str, Any]) -> dict[str, Any]:
         "pLocalLoad": _w_to_kw(ld.get("loadPower")),
         "elocalLoadToday": ld.get("eLocalLoadToday"),
         "elocalLoadTotal": ld.get("eLocalLoadTotal"),
-        # --- Detailed-only fields (no equivalent in sph_system_status) ---
-        "bmsBatteryTemp": bat.get("bmsBatteryTemp"),
-        "bmsBatteryCurr": bat.get("bmsBatteryCurr"),
-        "ipv1": sol.get("ipv1"),
-        "ipv2": sol.get("ipv2"),
-        "ipv3": sol.get("ipv3"),
-        "invTemp": inv.get("invTemp"),
-        "dcTemp": inv.get("dcTemp"),
-        "upsPac1": _w_to_kw(inv.get("upsPac1")),
-        "epsIac1": inv.get("epsIac1"),
-        "rLoadVol": ld.get("rLoadVol"),
     }
 
 
@@ -313,23 +325,19 @@ class GrowattCoordinator(DataUpdateCoordinator[dict[str, Any]]):
                 # newer SPH/SPM models like SPM-10000TL-HU which V1
                 # does not expose.
                 #
-                # Two live-data sources, picked via the Options flow:
-                #   - "standard"  → sph_system_status (the original
-                #                   endpoint, fewer fields)
-                #   - "detailed"  → sph_all_params (richer: per-string
-                #                   PV currents, temperatures, backup
-                #                   output, load voltage; also includes
-                #                   etoUserToday/Total so we skip the
-                #                   chart endpoint)
-                detailed = self._sph_data_source == SPH_DATA_SOURCE_DETAILED
-                if detailed:
-                    sph_status = _transform_sph_all_params(
-                        self.api.sph_all_params(self.device_id)
-                    )
-                else:
-                    sph_status = self.api.sph_system_status(
-                        self.plant_id, self.device_id
-                    )
+                # We always fetch sph_system_status at the live cadence
+                # AND sph_all_params at the slow cadence. The user's
+                # chosen source decides which one populates the
+                # *overlapped* fields (SOC, ppv, pacToGrid, etc.).
+                # Fields exclusive to sph_all_params (temperatures,
+                # per-string PV currents, backup output, load voltage)
+                # always come from the cached all-params snapshot.
+                detailed_source = (
+                    self._sph_data_source == SPH_DATA_SOURCE_DETAILED
+                )
+                sph_status = self.api.sph_system_status(
+                    self.plant_id, self.device_id
+                )
 
                 now = datetime.datetime.now(datetime.UTC)
                 slow_due = self._last_slow_refresh is None or (
@@ -341,8 +349,18 @@ class GrowattCoordinator(DataUpdateCoordinator[dict[str, Any]]):
                         self.plant_id, self.device_id
                     )
                     sph_settings = self.api.sph_settings(self.device_id)
+                    all_params = self.api.sph_all_params(self.device_id)
                     slow: dict[str, Any] = {**sph_overview, **sph_settings}
-                    if not detailed:
+                    # Always merge detailed-only fields so those
+                    # sensors populate regardless of the source choice.
+                    slow.update(_all_params_detailed_only(all_params))
+                    # Cache the overlapped fields too so they're
+                    # available when the source picker is set to
+                    # "detailed" — they refresh at slow cadence then.
+                    slow["__overlapped_from_all_params"] = (
+                        _all_params_overlapped(all_params)
+                    )
+                    if not detailed_source:
                         # Grid-import kWh (etouser) is missing from
                         # sph_energy_overview; pull it from the chart
                         # endpoint. chart_type=0 → today, 3 → lifetime.
@@ -365,7 +383,20 @@ class GrowattCoordinator(DataUpdateCoordinator[dict[str, Any]]):
                     self._cached_slow_data = slow
                     self._last_slow_refresh = now
 
-                self.data = {**sph_status, **self._cached_slow_data}
+                # Build self.data starting from slow data, then layer
+                # the overlapped fields per the chosen source on top.
+                slow_data = {
+                    k: v
+                    for k, v in self._cached_slow_data.items()
+                    if k != "__overlapped_from_all_params"
+                }
+                if detailed_source:
+                    overlapped = self._cached_slow_data.get(
+                        "__overlapped_from_all_params", {}
+                    )
+                    self.data = {**sph_status, **overlapped, **slow_data}
+                else:
+                    self.data = {**sph_status, **slow_data}
             _LOGGER.debug(
                 "sph_info for device %s: %r", self.device_id, self.data
             )
