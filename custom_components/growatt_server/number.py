@@ -5,7 +5,11 @@ import logging
 
 from growattServer import GrowattV1ApiError
 
-from homeassistant.components.number import NumberEntity, NumberEntityDescription
+from homeassistant.components.number import (
+    NumberDeviceClass,
+    NumberEntity,
+    NumberEntityDescription,
+)
 from homeassistant.const import PERCENTAGE, EntityCategory, UnitOfPower
 from homeassistant.core import HomeAssistant
 from homeassistant.exceptions import HomeAssistantError
@@ -93,6 +97,7 @@ SPH_CLASSIC_NUMBER_TYPES: tuple[GrowattNumberEntityDescription, ...] = (
         key="sph_max_sell_power",
         translation_key="sph_max_sell_power",
         api_key="psell_max",
+        device_class=NumberDeviceClass.POWER,
         native_unit_of_measurement=UnitOfPower.WATT,
         native_step=100,
         native_min_value=0,
