@@ -22,7 +22,13 @@ from homeassistant.const import (
     CONF_USERNAME,
 )
 from homeassistant.core import callback
-from homeassistant.helpers.selector import SelectSelector, SelectSelectorConfig
+from homeassistant.helpers.selector import (
+    NumberSelector,
+    NumberSelectorConfig,
+    NumberSelectorMode,
+    SelectSelector,
+    SelectSelectorConfig,
+)
 
 from .const import (
     ABORT_NO_PLANTS,
@@ -463,25 +469,31 @@ class GrowattServerOptionsFlow(OptionsFlow):
         current_slow = self.config_entry.options.get(
             CONF_SLOW_SCAN_INTERVAL_MINUTES, DEFAULT_SLOW_SCAN_INTERVAL_MINUTES
         )
+        # Use number input boxes (mode=BOX) rather than the default slider
+        # so users can read and type the value precisely.
         schema = vol.Schema(
             {
                 vol.Required(
                     CONF_SCAN_INTERVAL_MINUTES, default=current_fast
-                ): vol.All(
-                    vol.Coerce(int),
-                    vol.Range(
+                ): NumberSelector(
+                    NumberSelectorConfig(
                         min=MIN_SCAN_INTERVAL_MINUTES,
                         max=MAX_SCAN_INTERVAL_MINUTES,
-                    ),
+                        step=1,
+                        mode=NumberSelectorMode.BOX,
+                        unit_of_measurement="min",
+                    )
                 ),
                 vol.Required(
                     CONF_SLOW_SCAN_INTERVAL_MINUTES, default=current_slow
-                ): vol.All(
-                    vol.Coerce(int),
-                    vol.Range(
+                ): NumberSelector(
+                    NumberSelectorConfig(
                         min=MIN_SLOW_SCAN_INTERVAL_MINUTES,
                         max=MAX_SLOW_SCAN_INTERVAL_MINUTES,
-                    ),
+                        step=1,
+                        mode=NumberSelectorMode.BOX,
+                        unit_of_measurement="min",
+                    )
                 ),
             }
         )
