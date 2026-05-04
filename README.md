@@ -43,8 +43,7 @@ Home Assistant via the manifest.
   fork: `growattServer @ git+https://github.com/morland96/PyPi_GrowattServer.git@v2.1.0+sph-classic.1`.
 - `coordinator.py` — branches the SPH handler on `api_version`.
   V1 path unchanged; classic path calls `sph_system_status()` and
-  `sph_energy_overview()` from the patched library. Also fixes a
-  pre-existing `except A, B:` Python 3 syntax error at line 502.
+  `sph_energy_overview()` from the patched library.
 - `sensor/sph_classic.py` *(new)* — 22 sensor descriptions matching
   the field names returned by the classic-mode SPH endpoints (`SOC`,
   `vBat`, `pDisCharge1`, energy totals, etc.).
