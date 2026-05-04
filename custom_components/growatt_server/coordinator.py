@@ -397,6 +397,20 @@ class GrowattCoordinator(DataUpdateCoordinator[dict[str, Any]]):
                     self.data = {**sph_status, **overlapped, **slow_data}
                 else:
                     self.data = {**sph_status, **slow_data}
+
+                # Synthesise total inverter AC output: power delivered
+                # to the local load plus power exported to grid, with
+                # any grid-import portion of the load excluded.
+                #     = max(0, pLocalLoad - pacToUser) + pacToGrid
+                try:
+                    p_load = float(self.data.get("pLocalLoad") or 0)
+                    p_to_user = float(self.data.get("pacToUser") or 0)
+                    p_to_grid = float(self.data.get("pacToGrid") or 0)
+                    self.data["pInverterOutput"] = round(
+                        max(0.0, p_load - p_to_user) + p_to_grid, 3
+                    )
+                except (TypeError, ValueError):
+                    self.data["pInverterOutput"] = None
             _LOGGER.debug(
                 "sph_info for device %s: %r", self.device_id, self.data
             )

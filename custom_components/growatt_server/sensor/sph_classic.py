@@ -123,6 +123,17 @@ SPH_CLASSIC_SENSOR_TYPES: tuple[GrowattSensorEntityDescription, ...] = (
         state_class=SensorStateClass.MEASUREMENT,
     ),
 
+    # Computed: total inverter AC output = power to load (from inverter,
+    # not from grid) + power exported to grid.
+    GrowattSensorEntityDescription(
+        key="sph_inverter_output_power",
+        translation_key="sph_inverter_output_power",
+        api_key="pInverterOutput",
+        native_unit_of_measurement=UnitOfPower.KILO_WATT,
+        device_class=SensorDeviceClass.POWER,
+        state_class=SensorStateClass.MEASUREMENT,
+    ),
+
     # --- Energy totals (from sph_energy_overview) ---
     GrowattSensorEntityDescription(
         key="sph_solar_energy_today",

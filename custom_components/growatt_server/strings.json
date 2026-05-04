@@ -646,6 +646,9 @@
       },
       "sph_load_voltage": {
         "name": "Load voltage"
+      },
+      "sph_inverter_output_power": {
+        "name": "Inverter output power"
       }
     },
     "switch": {
