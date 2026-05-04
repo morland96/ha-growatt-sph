@@ -9,7 +9,7 @@
   "loggers": ["growattServer"],
   "quality_scale": "silver",
   "requirements": [
-    "growattServer @ git+https://github.com/morland96/PyPi_GrowattServer.git@v2.1.0+sph-classic.1"
+    "growattServer @ git+https://github.com/morland96/PyPi_GrowattServer.git@v2.1.0+sph-classic.2"
   ],
-  "version": "2.1.1"
+  "version": "2.1.2"
 }

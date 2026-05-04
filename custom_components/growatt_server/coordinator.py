@@ -248,11 +248,22 @@ class GrowattCoordinator(DataUpdateCoordinator[dict[str, Any]]):
                     # Grid-import kWh (etouser) is missing from
                     # sph_energy_overview; pull it from the chart
                     # endpoint. chart_type=0 → today, 3 → lifetime.
+                    # Pass HA's configured local date — the API treats
+                    # the date string in the plant's local timezone, not
+                    # UTC, so a UTC-based "today" is wrong near midnight
+                    # for non-UTC plants.
+                    today_local = dt_util.now().date()
                     etouser_today = self.api.sph_energy_prod_and_cons(
-                        self.plant_id, self.device_id, chart_type=0
+                        self.plant_id,
+                        self.device_id,
+                        date=today_local,
+                        chart_type=0,
                     ).get("etouser")
                     etouser_total = self.api.sph_energy_prod_and_cons(
-                        self.plant_id, self.device_id, chart_type=3
+                        self.plant_id,
+                        self.device_id,
+                        date=today_local,
+                        chart_type=3,
                     ).get("etouser")
                     self._cached_slow_data = {
                         **sph_overview,
