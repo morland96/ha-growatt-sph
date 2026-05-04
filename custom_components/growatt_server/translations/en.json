@@ -404,6 +404,9 @@
       "tlx_amperage_input_3": {
         "name": "Input 3 amperage"
       },
+      "tlx_amperage_input_4": {
+        "name": "Input 4 amperage"
+      },
       "tlx_batteries_charged_from_grid_today": {
         "name": "Batteries charged from grid today"
       },
@@ -440,8 +443,32 @@
       "tlx_energy_today": {
         "name": "Energy today"
       },
+      "tlx_energy_today_input_1": {
+        "name": "Energy today input 1"
+      },
+      "tlx_energy_today_input_2": {
+        "name": "Energy today input 2"
+      },
+      "tlx_energy_today_input_3": {
+        "name": "Energy today input 3"
+      },
+      "tlx_energy_today_input_4": {
+        "name": "Energy today input 4"
+      },
       "tlx_energy_total": {
         "name": "Lifetime energy output"
+      },
+      "tlx_energy_total_input_1": {
+        "name": "Lifetime total energy input 1"
+      },
+      "tlx_energy_total_input_2": {
+        "name": "Lifetime total energy input 2"
+      },
+      "tlx_energy_total_input_3": {
+        "name": "Lifetime total energy input 3"
+      },
+      "tlx_energy_total_input_4": {
+        "name": "Lifetime total energy input 4"
       },
       "tlx_export_to_grid_today": {
         "name": "Export to grid today"
@@ -527,6 +554,9 @@
       "tlx_voltage_input_3": {
         "name": "Input 3 voltage"
       },
+      "tlx_voltage_input_4": {
+        "name": "Input 4 voltage"
+      },
       "tlx_wattage_input_1": {
         "name": "Input 1 wattage"
       },
@@ -535,6 +565,9 @@
       },
       "tlx_wattage_input_3": {
         "name": "Input 3 wattage"
+      },
+      "tlx_wattage_input_4": {
+        "name": "Input 4 wattage"
       },
       "total_energy_output": {
         "name": "Lifetime energy output"
