@@ -667,6 +667,13 @@
           "Export Limit to Backup Load": "Export Limit to Backup Load",
           "Export Limit to Home Load": "Export Limit to Home Load"
         }
+      },
+      "sph_pv_priority": {
+        "name": "PV priority",
+        "state": {
+          "Battery First": "Battery First",
+          "Load First": "Load First"
+        }
       }
     }
   },

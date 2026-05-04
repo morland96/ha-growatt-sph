@@ -28,7 +28,13 @@ SYS_WORK_MODE_OPTIONS = {
     "Export Limit to Backup Load": 2,
     "Export Limit to Home Load": 3,
 }
-SYS_WORK_MODE_REVERSE = {v: k for k, v in SYS_WORK_MODE_OPTIONS.items()}
+
+# energy_mode (PV Priority). Confirmed in-field by capturing the
+# ShinePhone toggle: setting "Battery First" sends param1=0.
+ENERGY_MODE_OPTIONS = {
+    "Battery First": 0,
+    "Load First": 1,
+}
 
 
 @dataclass(frozen=True, kw_only=True)
@@ -47,6 +53,13 @@ SPH_CLASSIC_SELECT_TYPES: tuple[GrowattSelectEntityDescription, ...] = (
         api_key="sys_work_mode",
         options=list(SYS_WORK_MODE_OPTIONS.keys()),
         options_map=SYS_WORK_MODE_OPTIONS,
+    ),
+    GrowattSelectEntityDescription(
+        key="sph_pv_priority",
+        translation_key="sph_pv_priority",
+        api_key="energy_mode",
+        options=list(ENERGY_MODE_OPTIONS.keys()),
+        options_map=ENERGY_MODE_OPTIONS,
     ),
 )
 
@@ -104,10 +117,12 @@ class GrowattSelect(CoordinatorEntity[GrowattCoordinator], SelectEntity):
             return None
         # Reverse-map the integer to the label. If the device reports a
         # value we don't have a label for, expose it as a numeric string
-        # so the user can see it (rather than silently going None).
-        if self.entity_description.api_key == "sys_work_mode":
-            return SYS_WORK_MODE_REVERSE.get(value, f"Unknown ({value})")
-        return None
+        # so the user can see it rather than going silently None.
+        options_map = self.entity_description.options_map or {}
+        for label, mapped_value in options_map.items():
+            if mapped_value == value:
+                return label
+        return f"Unknown ({value})"
 
     async def async_select_option(self, option: str) -> None:
         """Set the option."""
