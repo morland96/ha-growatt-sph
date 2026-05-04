@@ -204,6 +204,23 @@ SPH_CLASSIC_SENSOR_TYPES: tuple[GrowattSensorEntityDescription, ...] = (
         state_class=SensorStateClass.TOTAL_INCREASING,
         never_resets=True,
     ),
+    GrowattSensorEntityDescription(
+        key="sph_import_from_grid_today",
+        name="Import from grid today",
+        api_key="etouserToday",
+        native_unit_of_measurement=UnitOfEnergy.KILO_WATT_HOUR,
+        device_class=SensorDeviceClass.ENERGY,
+        state_class=SensorStateClass.TOTAL_INCREASING,
+    ),
+    GrowattSensorEntityDescription(
+        key="sph_import_from_grid_total",
+        name="Import from grid lifetime",
+        api_key="etouserTotal",
+        native_unit_of_measurement=UnitOfEnergy.KILO_WATT_HOUR,
+        device_class=SensorDeviceClass.ENERGY,
+        state_class=SensorStateClass.TOTAL_INCREASING,
+        never_resets=True,
+    ),
 
     # --- Settings (diagnostic, read-only) ---------------------------
     # Exposed so values are visible in HA. To change them use the

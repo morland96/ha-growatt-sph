@@ -217,7 +217,22 @@ class GrowattCoordinator(DataUpdateCoordinator[dict[str, Any]]):
                 # flags, charge/discharge current limits, etc. Used by
                 # diagnostic sensors and the set_sph_parameter service.
                 sph_settings = self.api.sph_settings(self.device_id)
-                self.data = {**sph_status, **sph_overview, **sph_settings}
+                # Grid-import kWh (etouser) is not in sph_energy_overview;
+                # pull it from the chart endpoint. chart_type=0 → today,
+                # chart_type=3 → lifetime.
+                etouser_today = self.api.sph_energy_prod_and_cons(
+                    self.plant_id, self.device_id, chart_type=0
+                ).get("etouser")
+                etouser_total = self.api.sph_energy_prod_and_cons(
+                    self.plant_id, self.device_id, chart_type=3
+                ).get("etouser")
+                self.data = {
+                    **sph_status,
+                    **sph_overview,
+                    **sph_settings,
+                    "etouserToday": etouser_today,
+                    "etouserTotal": etouser_total,
+                }
             _LOGGER.debug(
                 "sph_info for device %s: %r", self.device_id, self.data
             )
