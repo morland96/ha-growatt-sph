@@ -638,17 +638,14 @@
       "sph_dc_bus_temperature": {
         "name": "DC bus temperature"
       },
-      "sph_backup_output_power": {
-        "name": "Backup output power"
-      },
-      "sph_backup_output_current": {
-        "name": "Backup output current"
-      },
       "sph_load_voltage": {
         "name": "Load voltage"
       },
       "sph_inverter_output_power": {
         "name": "Inverter output power"
+      },
+      "sph_inverter_output_current": {
+        "name": "Inverter output current"
       }
     },
     "switch": {
