@@ -80,6 +80,13 @@ SPH_CLASSIC_SENSOR_TYPES: tuple[GrowattSensorEntityDescription, ...] = (
         native_unit_of_measurement=UnitOfElectricPotential.VOLT,
         device_class=SensorDeviceClass.VOLTAGE,
     ),
+    GrowattSensorEntityDescription(
+        key="sph_pv3_voltage",
+        translation_key="sph_pv3_voltage",
+        api_key="vpv3",
+        native_unit_of_measurement=UnitOfElectricPotential.VOLT,
+        device_class=SensorDeviceClass.VOLTAGE,
+    ),
 
     # --- Grid ---
     GrowattSensorEntityDescription(

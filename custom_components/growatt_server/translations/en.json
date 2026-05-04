@@ -646,6 +646,9 @@
       },
       "sph_inverter_output_current": {
         "name": "Inverter output current"
+      },
+      "sph_pv3_voltage": {
+        "name": "PV3 voltage"
       }
     },
     "switch": {
