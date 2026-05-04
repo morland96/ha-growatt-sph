@@ -649,6 +649,9 @@
       },
       "sph_pv3_voltage": {
         "name": "PV3 voltage"
+      },
+      "sph_pv3_power": {
+        "name": "PV3 wattage"
       }
     },
     "switch": {
