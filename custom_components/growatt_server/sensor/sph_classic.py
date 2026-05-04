@@ -1,9 +1,13 @@
 """Sensor definitions for SPH devices accessed via the classic mobile API.
 
-The keys here mirror the response shape of `sph_system_status`,
-`sph_energy_overview`, and `sph_settings` (newTwoSphAPI.do), which is
+The keys here mirror the response shape of `sph_system_status` /
+`sph_all_params`, `sph_energy_overview`, and `sph_settings`, which is
 distinct from the V1 OpenAPI's sph_detail/sph_energy response — hence
 the separate set.
+
+Sensors marked "detailed mode only" are populated when the user
+selects "Detailed" in the integration's options. In standard mode
+they remain `unavailable`.
 """
 
 from homeassistant.components.sensor import SensorDeviceClass, SensorStateClass
@@ -15,6 +19,7 @@ from homeassistant.const import (
     UnitOfEnergy,
     UnitOfFrequency,
     UnitOfPower,
+    UnitOfTemperature,
 )
 
 from .sensor_entity_description import GrowattSensorEntityDescription
@@ -206,7 +211,7 @@ SPH_CLASSIC_SENSOR_TYPES: tuple[GrowattSensorEntityDescription, ...] = (
     ),
     GrowattSensorEntityDescription(
         key="sph_import_from_grid_today",
-        name="Import from grid today",
+        translation_key="sph_import_from_grid_today",
         api_key="etouserToday",
         native_unit_of_measurement=UnitOfEnergy.KILO_WATT_HOUR,
         device_class=SensorDeviceClass.ENERGY,
@@ -214,7 +219,7 @@ SPH_CLASSIC_SENSOR_TYPES: tuple[GrowattSensorEntityDescription, ...] = (
     ),
     GrowattSensorEntityDescription(
         key="sph_import_from_grid_total",
-        name="Import from grid lifetime",
+        translation_key="sph_import_from_grid_lifetime",
         api_key="etouserTotal",
         native_unit_of_measurement=UnitOfEnergy.KILO_WATT_HOUR,
         device_class=SensorDeviceClass.ENERGY,
@@ -223,37 +228,36 @@ SPH_CLASSIC_SENSOR_TYPES: tuple[GrowattSensorEntityDescription, ...] = (
     ),
 
     # --- Settings (diagnostic, read-only) ---------------------------
-    # Exposed so values are visible in HA. To change them use the
-    # `growatt_server.set_sph_parameter` service.
+    # Use the `growatt_server.set_sph_parameter` service to change them.
     GrowattSensorEntityDescription(
         key="sph_setting_sys_work_mode",
-        name="System work mode",
+        translation_key="sph_setting_sys_work_mode",
         api_key="sys_work_mode",
         entity_category=EntityCategory.DIAGNOSTIC,
     ),
     GrowattSensorEntityDescription(
         key="sph_setting_pv_on_off",
-        name="PV output enabled",
+        translation_key="sph_setting_pv_on_off",
         api_key="pv_on_off",
         entity_category=EntityCategory.DIAGNOSTIC,
     ),
     GrowattSensorEntityDescription(
         key="sph_setting_cutoff_soc",
-        name="Discharge cutoff SoC",
+        translation_key="sph_setting_cutoff_soc",
         api_key="cutoff_soc",
         native_unit_of_measurement=PERCENTAGE,
         entity_category=EntityCategory.DIAGNOSTIC,
     ),
     GrowattSensorEntityDescription(
         key="sph_setting_cuton_soc",
-        name="Charge cutoff SoC",
+        translation_key="sph_setting_cuton_soc",
         api_key="cuton_soc",
         native_unit_of_measurement=PERCENTAGE,
         entity_category=EntityCategory.DIAGNOSTIC,
     ),
     GrowattSensorEntityDescription(
         key="sph_setting_bat_max_charge_current",
-        name="Battery max charge current",
+        translation_key="sph_setting_bat_max_charge_current",
         api_key="bat_max_charge_current",
         native_unit_of_measurement=UnitOfElectricCurrent.AMPERE,
         device_class=SensorDeviceClass.CURRENT,
@@ -261,7 +265,7 @@ SPH_CLASSIC_SENSOR_TYPES: tuple[GrowattSensorEntityDescription, ...] = (
     ),
     GrowattSensorEntityDescription(
         key="sph_setting_bat_max_discharge_current",
-        name="Battery max discharge current",
+        translation_key="sph_setting_bat_max_discharge_current",
         api_key="bat_max_discharge_current",
         native_unit_of_measurement=UnitOfElectricCurrent.AMPERE,
         device_class=SensorDeviceClass.CURRENT,
@@ -269,14 +273,97 @@ SPH_CLASSIC_SENSOR_TYPES: tuple[GrowattSensorEntityDescription, ...] = (
     ),
     GrowattSensorEntityDescription(
         key="sph_setting_zero_ct_sell",
-        name="Zero export at CT",
+        translation_key="sph_setting_zero_ct_sell",
         api_key="zero_ct_sell",
         entity_category=EntityCategory.DIAGNOSTIC,
     ),
     GrowattSensorEntityDescription(
         key="sph_setting_zero_load_sell",
-        name="Zero export at load meter",
+        translation_key="sph_setting_zero_load_sell",
         api_key="zero_load_sell",
         entity_category=EntityCategory.DIAGNOSTIC,
+    ),
+
+    # --- Detailed-mode only (sph_all_params) ------------------------
+    # These remain `unavailable` when the live data source is set to
+    # Standard. Switch to Detailed in Options to populate them.
+    GrowattSensorEntityDescription(
+        key="sph_battery_temperature",
+        translation_key="sph_battery_temperature",
+        api_key="bmsBatteryTemp",
+        native_unit_of_measurement=UnitOfTemperature.CELSIUS,
+        device_class=SensorDeviceClass.TEMPERATURE,
+        state_class=SensorStateClass.MEASUREMENT,
+    ),
+    GrowattSensorEntityDescription(
+        key="sph_battery_current",
+        translation_key="sph_battery_current",
+        api_key="bmsBatteryCurr",
+        native_unit_of_measurement=UnitOfElectricCurrent.AMPERE,
+        device_class=SensorDeviceClass.CURRENT,
+        state_class=SensorStateClass.MEASUREMENT,
+    ),
+    GrowattSensorEntityDescription(
+        key="sph_pv1_current",
+        translation_key="sph_pv1_current",
+        api_key="ipv1",
+        native_unit_of_measurement=UnitOfElectricCurrent.AMPERE,
+        device_class=SensorDeviceClass.CURRENT,
+        state_class=SensorStateClass.MEASUREMENT,
+    ),
+    GrowattSensorEntityDescription(
+        key="sph_pv2_current",
+        translation_key="sph_pv2_current",
+        api_key="ipv2",
+        native_unit_of_measurement=UnitOfElectricCurrent.AMPERE,
+        device_class=SensorDeviceClass.CURRENT,
+        state_class=SensorStateClass.MEASUREMENT,
+    ),
+    GrowattSensorEntityDescription(
+        key="sph_pv3_current",
+        translation_key="sph_pv3_current",
+        api_key="ipv3",
+        native_unit_of_measurement=UnitOfElectricCurrent.AMPERE,
+        device_class=SensorDeviceClass.CURRENT,
+        state_class=SensorStateClass.MEASUREMENT,
+    ),
+    GrowattSensorEntityDescription(
+        key="sph_inverter_temperature",
+        translation_key="sph_inverter_temperature",
+        api_key="invTemp",
+        native_unit_of_measurement=UnitOfTemperature.CELSIUS,
+        device_class=SensorDeviceClass.TEMPERATURE,
+        state_class=SensorStateClass.MEASUREMENT,
+    ),
+    GrowattSensorEntityDescription(
+        key="sph_dc_bus_temperature",
+        translation_key="sph_dc_bus_temperature",
+        api_key="dcTemp",
+        native_unit_of_measurement=UnitOfTemperature.CELSIUS,
+        device_class=SensorDeviceClass.TEMPERATURE,
+        state_class=SensorStateClass.MEASUREMENT,
+    ),
+    GrowattSensorEntityDescription(
+        key="sph_backup_output_power",
+        translation_key="sph_backup_output_power",
+        api_key="upsPac1",
+        native_unit_of_measurement=UnitOfPower.KILO_WATT,
+        device_class=SensorDeviceClass.POWER,
+        state_class=SensorStateClass.MEASUREMENT,
+    ),
+    GrowattSensorEntityDescription(
+        key="sph_backup_output_current",
+        translation_key="sph_backup_output_current",
+        api_key="epsIac1",
+        native_unit_of_measurement=UnitOfElectricCurrent.AMPERE,
+        device_class=SensorDeviceClass.CURRENT,
+        state_class=SensorStateClass.MEASUREMENT,
+    ),
+    GrowattSensorEntityDescription(
+        key="sph_load_voltage",
+        translation_key="sph_load_voltage",
+        api_key="rLoadVol",
+        native_unit_of_measurement=UnitOfElectricPotential.VOLT,
+        device_class=SensorDeviceClass.VOLTAGE,
     ),
 )

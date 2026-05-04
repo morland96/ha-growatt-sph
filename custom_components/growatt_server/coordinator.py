@@ -25,11 +25,14 @@ from .const import (
     BATT_MODE_LOAD_FIRST,
     CONF_SCAN_INTERVAL_MINUTES,
     CONF_SLOW_SCAN_INTERVAL_MINUTES,
+    CONF_SPH_DATA_SOURCE,
     DEFAULT_SCAN_INTERVAL_MINUTES,
     DEFAULT_SLOW_SCAN_INTERVAL_MINUTES,
+    DEFAULT_SPH_DATA_SOURCE,
     DEFAULT_URL,
     DOMAIN,
     LOGIN_INVALID_AUTH_CODE,
+    SPH_DATA_SOURCE_DETAILED,
     V1_API_ERROR_NO_PRIVILEGE,
 )
 from .models import GrowattRuntimeData
@@ -40,6 +43,88 @@ if TYPE_CHECKING:
 type GrowattConfigEntry = ConfigEntry[GrowattRuntimeData]
 
 _LOGGER = logging.getLogger(__name__)
+
+
+def _w_to_kw(value: Any) -> float | None:
+    """Convert a value in watts to kilowatts; returns None if value is None."""
+    if value is None:
+        return None
+    try:
+        return float(value) / 1000.0
+    except (TypeError, ValueError):
+        return None
+
+
+def _transform_sph_all_params(obj: dict[str, Any]) -> dict[str, Any]:
+    """Flatten sph_all_params into the same flat shape as sph_system_status.
+
+    The SPH all-params endpoint returns nested groups (battery, solar,
+    grid, inverter, load) with field names that occasionally differ
+    from sph_system_status, and reports power values in watts where
+    sph_system_status uses kilowatts. Normalise both so existing
+    sensors can consume either source transparently. Extra fields not
+    available in standard mode are surfaced under their original
+    keys so the new diagnostic sensors can read them.
+    """
+    bat = obj.get("battery", {}) or {}
+    sol = obj.get("solar", {}) or {}
+    grd = obj.get("grid", {}) or {}
+    inv = obj.get("inverter", {}) or {}
+    ld = obj.get("load", {}) or {}
+
+    # Total PV power: sph_all_params doesn't include it, so synthesise.
+    p1 = sol.get("ppv1") or 0
+    p2 = sol.get("ppv2") or 0
+    p3 = sol.get("ppv3") or 0
+    try:
+        ppv_kw = (float(p1) + float(p2) + float(p3)) / 1000.0
+    except (TypeError, ValueError):
+        ppv_kw = None
+
+    return {
+        # Battery
+        "SOC": bat.get("soc"),
+        "vBat": bat.get("vBat"),
+        "pCharge1": _w_to_kw(bat.get("pCharge1")),
+        "pDisCharge1": _w_to_kw(bat.get("pDischarge1")),
+        # Solar
+        "vpv1": sol.get("vpv1"),
+        "vpv2": sol.get("vpv2"),
+        "vpv3": sol.get("vpv3"),
+        "ppv1": _w_to_kw(sol.get("ppv1")),
+        "ppv2": _w_to_kw(sol.get("ppv2")),
+        "ppv3": _w_to_kw(sol.get("ppv3")),
+        "ppv": ppv_kw,
+        "epvToday": sol.get("epvToday"),
+        "epvTotal": sol.get("epvTotal"),
+        # Grid
+        "vAc1": grd.get("gridVol"),
+        "fAc": grd.get("fac"),
+        "pacToGrid": _w_to_kw(grd.get("pacToGridR")),
+        "pacToUser": _w_to_kw(grd.get("pacToUser")),
+        "eToGridToday": grd.get("etoGridToday"),
+        "eToGridTotal": grd.get("etoGridTotal"),
+        "etouserToday": grd.get("etoUserToday"),
+        "etouserTotal": grd.get("etoUserTotal"),
+        # Inverter
+        "status": inv.get("status"),
+        "sys_work_mode": inv.get("uwSysWorkMode"),
+        # Load
+        "pLocalLoad": _w_to_kw(ld.get("loadPower")),
+        "elocalLoadToday": ld.get("eLocalLoadToday"),
+        "elocalLoadTotal": ld.get("eLocalLoadTotal"),
+        # --- Detailed-only fields (no equivalent in sph_system_status) ---
+        "bmsBatteryTemp": bat.get("bmsBatteryTemp"),
+        "bmsBatteryCurr": bat.get("bmsBatteryCurr"),
+        "ipv1": sol.get("ipv1"),
+        "ipv2": sol.get("ipv2"),
+        "ipv3": sol.get("ipv3"),
+        "invTemp": inv.get("invTemp"),
+        "dcTemp": inv.get("dcTemp"),
+        "upsPac1": _w_to_kw(inv.get("upsPac1")),
+        "epsIac1": inv.get("epsIac1"),
+        "rLoadVol": ld.get("rLoadVol"),
+    }
 
 
 class GrowattCoordinator(DataUpdateCoordinator[dict[str, Any]]):
@@ -69,6 +154,9 @@ class GrowattCoordinator(DataUpdateCoordinator[dict[str, Any]]):
             config_entry.options.get(
                 CONF_SLOW_SCAN_INTERVAL_MINUTES, DEFAULT_SLOW_SCAN_INTERVAL_MINUTES
             )
+        )
+        self._sph_data_source = config_entry.options.get(
+            CONF_SPH_DATA_SOURCE, DEFAULT_SPH_DATA_SOURCE
         )
         self._cached_slow_data: dict[str, Any] = {}
         self._last_slow_refresh: datetime.datetime | None = None
@@ -221,16 +309,27 @@ class GrowattCoordinator(DataUpdateCoordinator[dict[str, Any]]):
                 self.data = combined
             else:
                 # Classic API path — regional mobile endpoints
-                # (newTwoSphAPI.do). Required for newer SPH/SPM models
-                # like SPM-10000TL-HU which V1 does not expose.
+                # (newTwoSphAPI.do / newTwoDeviceAPI.do). Required for
+                # newer SPH/SPM models like SPM-10000TL-HU which V1
+                # does not expose.
                 #
-                # Always refresh sph_system_status (the live snapshot
-                # used by the power sensors). The kWh totals, settings,
-                # and chart-derived values change much more slowly so
-                # we cache them and only refresh on the slow cadence.
-                sph_status = self.api.sph_system_status(
-                    self.plant_id, self.device_id
-                )
+                # Two live-data sources, picked via the Options flow:
+                #   - "standard"  → sph_system_status (the original
+                #                   endpoint, fewer fields)
+                #   - "detailed"  → sph_all_params (richer: per-string
+                #                   PV currents, temperatures, backup
+                #                   output, load voltage; also includes
+                #                   etoUserToday/Total so we skip the
+                #                   chart endpoint)
+                detailed = self._sph_data_source == SPH_DATA_SOURCE_DETAILED
+                if detailed:
+                    sph_status = _transform_sph_all_params(
+                        self.api.sph_all_params(self.device_id)
+                    )
+                else:
+                    sph_status = self.api.sph_system_status(
+                        self.plant_id, self.device_id
+                    )
 
                 now = datetime.datetime.now(datetime.UTC)
                 slow_due = self._last_slow_refresh is None or (
@@ -241,36 +340,29 @@ class GrowattCoordinator(DataUpdateCoordinator[dict[str, Any]]):
                     sph_overview = self.api.sph_energy_overview(
                         self.plant_id, self.device_id
                     )
-                    # Settings bean — ~149 adjustable parameters used by
-                    # the diagnostic sensors and the set_sph_parameter
-                    # service.
                     sph_settings = self.api.sph_settings(self.device_id)
-                    # Grid-import kWh (etouser) is missing from
-                    # sph_energy_overview; pull it from the chart
-                    # endpoint. chart_type=0 → today, 3 → lifetime.
-                    # Pass HA's configured local date — the API treats
-                    # the date string in the plant's local timezone, not
-                    # UTC, so a UTC-based "today" is wrong near midnight
-                    # for non-UTC plants.
-                    today_local = dt_util.now().date()
-                    etouser_today = self.api.sph_energy_prod_and_cons(
-                        self.plant_id,
-                        self.device_id,
-                        date=today_local,
-                        chart_type=0,
-                    ).get("etouser")
-                    etouser_total = self.api.sph_energy_prod_and_cons(
-                        self.plant_id,
-                        self.device_id,
-                        date=today_local,
-                        chart_type=3,
-                    ).get("etouser")
-                    self._cached_slow_data = {
-                        **sph_overview,
-                        **sph_settings,
-                        "etouserToday": etouser_today,
-                        "etouserTotal": etouser_total,
-                    }
+                    slow: dict[str, Any] = {**sph_overview, **sph_settings}
+                    if not detailed:
+                        # Grid-import kWh (etouser) is missing from
+                        # sph_energy_overview; pull it from the chart
+                        # endpoint. chart_type=0 → today, 3 → lifetime.
+                        # Pass HA's configured local date — the API
+                        # treats the date string in the plant's local
+                        # timezone, not UTC.
+                        today_local = dt_util.now().date()
+                        slow["etouserToday"] = self.api.sph_energy_prod_and_cons(
+                            self.plant_id,
+                            self.device_id,
+                            date=today_local,
+                            chart_type=0,
+                        ).get("etouser")
+                        slow["etouserTotal"] = self.api.sph_energy_prod_and_cons(
+                            self.plant_id,
+                            self.device_id,
+                            date=today_local,
+                            chart_type=3,
+                        ).get("etouser")
+                    self._cached_slow_data = slow
                     self._last_slow_refresh = now
 
                 self.data = {**sph_status, **self._cached_slow_data}

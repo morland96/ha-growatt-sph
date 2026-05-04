@@ -91,7 +91,7 @@ MIN_NUMBER_TYPES: tuple[GrowattNumberEntityDescription, ...] = (
 SPH_CLASSIC_NUMBER_TYPES: tuple[GrowattNumberEntityDescription, ...] = (
     GrowattNumberEntityDescription(
         key="sph_max_sell_power",
-        name="Max sell power",
+        translation_key="sph_max_sell_power",
         api_key="psell_max",
         native_unit_of_measurement=UnitOfPower.WATT,
         native_step=100,

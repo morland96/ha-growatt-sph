@@ -55,12 +55,12 @@ MIN_SWITCH_TYPES: tuple[GrowattSwitchEntityDescription, ...] = (
 SPH_CLASSIC_SWITCH_TYPES: tuple[GrowattSwitchEntityDescription, ...] = (
     GrowattSwitchEntityDescription(
         key="sph_pv_sell_back_home",
-        name="PV sell-back (home load)",
+        translation_key="sph_pv_sell_back_home",
         api_key="zero_ct_sell",
     ),
     GrowattSwitchEntityDescription(
         key="sph_pv_sell_back_backup",
-        name="PV sell-back (backup load)",
+        translation_key="sph_pv_sell_back_backup",
         api_key="zero_load_sell",
     ),
 )

@@ -39,8 +39,10 @@ from .const import (
     CONF_REGION,
     CONF_SCAN_INTERVAL_MINUTES,
     CONF_SLOW_SCAN_INTERVAL_MINUTES,
+    CONF_SPH_DATA_SOURCE,
     DEFAULT_SCAN_INTERVAL_MINUTES,
     DEFAULT_SLOW_SCAN_INTERVAL_MINUTES,
+    DEFAULT_SPH_DATA_SOURCE,
     DEFAULT_URL,
     DOMAIN,
     ERROR_CANNOT_CONNECT,
@@ -51,6 +53,8 @@ from .const import (
     MIN_SCAN_INTERVAL_MINUTES,
     MIN_SLOW_SCAN_INTERVAL_MINUTES,
     SERVER_URLS_NAMES,
+    SPH_DATA_SOURCE_DETAILED,
+    SPH_DATA_SOURCE_STANDARD,
     V1_API_ERROR_NO_PRIVILEGE,
 )
 
@@ -469,6 +473,9 @@ class GrowattServerOptionsFlow(OptionsFlow):
         current_slow = self.config_entry.options.get(
             CONF_SLOW_SCAN_INTERVAL_MINUTES, DEFAULT_SLOW_SCAN_INTERVAL_MINUTES
         )
+        current_source = self.config_entry.options.get(
+            CONF_SPH_DATA_SOURCE, DEFAULT_SPH_DATA_SOURCE
+        )
         # Use number input boxes (mode=BOX) rather than the default slider
         # so users can read and type the value precisely.
         schema = vol.Schema(
@@ -493,6 +500,18 @@ class GrowattServerOptionsFlow(OptionsFlow):
                         step=1,
                         mode=NumberSelectorMode.BOX,
                         unit_of_measurement="min",
+                    )
+                ),
+                vol.Required(
+                    CONF_SPH_DATA_SOURCE, default=current_source
+                ): SelectSelector(
+                    SelectSelectorConfig(
+                        options=[
+                            SPH_DATA_SOURCE_STANDARD,
+                            SPH_DATA_SOURCE_DETAILED,
+                        ],
+                        translation_key="sph_data_source",
+                        mode="dropdown",
                     )
                 ),
             }

@@ -28,6 +28,18 @@ DEFAULT_SLOW_SCAN_INTERVAL_MINUTES = 5
 MIN_SLOW_SCAN_INTERVAL_MINUTES = 1
 MAX_SLOW_SCAN_INTERVAL_MINUTES = 60
 
+# SPH classic-mode live-data source. "standard" uses sph_system_status
+# (the original endpoint, fewer fields). "detailed" uses sph_all_params
+# (newTwoDeviceAPI.do?op=getSphAllParams) which returns the same data
+# plus per-string PV currents, battery temperature/current, inverter
+# and DC bus temperatures, backup output power/current, and load
+# voltage. Detailed mode also folds in grid-import (etoUserToday/Total)
+# so sph_energy_prod_and_cons is not needed.
+CONF_SPH_DATA_SOURCE = "sph_data_source"
+SPH_DATA_SOURCE_STANDARD = "standard"
+SPH_DATA_SOURCE_DETAILED = "detailed"
+DEFAULT_SPH_DATA_SOURCE = SPH_DATA_SOURCE_STANDARD
+
 
 # API key support
 CONF_API_KEY = "api_key"

@@ -104,6 +104,9 @@
       },
       "battery_discharge_soc_limit_on_grid": {
         "name": "Battery discharge SOC limit (on-grid)"
+      },
+      "sph_max_sell_power": {
+        "name": "Max sell power"
       }
     },
     "sensor": {
@@ -583,11 +586,87 @@
       },
       "total_output_power": {
         "name": "Output power"
+      },
+      "sph_import_from_grid_today": {
+        "name": "Import from grid today"
+      },
+      "sph_import_from_grid_lifetime": {
+        "name": "Lifetime import from grid"
+      },
+      "sph_setting_sys_work_mode": {
+        "name": "System work mode"
+      },
+      "sph_setting_pv_on_off": {
+        "name": "PV output enabled"
+      },
+      "sph_setting_cutoff_soc": {
+        "name": "Discharge cutoff SoC"
+      },
+      "sph_setting_cuton_soc": {
+        "name": "Charge cutoff SoC"
+      },
+      "sph_setting_bat_max_charge_current": {
+        "name": "Battery max charge current"
+      },
+      "sph_setting_bat_max_discharge_current": {
+        "name": "Battery max discharge current"
+      },
+      "sph_setting_zero_ct_sell": {
+        "name": "Zero export at CT"
+      },
+      "sph_setting_zero_load_sell": {
+        "name": "Zero export at load meter"
+      },
+      "sph_battery_temperature": {
+        "name": "Battery temperature"
+      },
+      "sph_battery_current": {
+        "name": "Battery current"
+      },
+      "sph_pv1_current": {
+        "name": "PV1 current"
+      },
+      "sph_pv2_current": {
+        "name": "PV2 current"
+      },
+      "sph_pv3_current": {
+        "name": "PV3 current"
+      },
+      "sph_inverter_temperature": {
+        "name": "Inverter temperature"
+      },
+      "sph_dc_bus_temperature": {
+        "name": "DC bus temperature"
+      },
+      "sph_backup_output_power": {
+        "name": "Backup output power"
+      },
+      "sph_backup_output_current": {
+        "name": "Backup output current"
+      },
+      "sph_load_voltage": {
+        "name": "Load voltage"
       }
     },
     "switch": {
       "ac_charge": {
         "name": "Charge from grid"
+      },
+      "sph_pv_sell_back_home": {
+        "name": "PV sell-back (home load)"
+      },
+      "sph_pv_sell_back_backup": {
+        "name": "PV sell-back (backup load)"
+      }
+    },
+    "select": {
+      "sph_sys_work_mode": {
+        "name": "System work mode",
+        "state": {
+          "On Grid Mode": "On Grid Mode",
+          "Export Limit to Backup Load": "Export Limit to Backup Load",
+          "Export Limit to Home Load": "Export Limit to Home Load"
+        }
       }
     }
   },
@@ -860,11 +939,21 @@
         "description": "Tweak how this integration polls the Growatt API.",
         "data": {
           "scan_interval_minutes": "Live polling interval (minutes)",
-          "slow_scan_interval_minutes": "Energy / settings polling interval (minutes)"
+          "slow_scan_interval_minutes": "Energy / settings polling interval (minutes)",
+          "sph_data_source": "Live data source"
         },
         "data_description": {
           "scan_interval_minutes": "How often to refresh live snapshot values — instantaneous power, voltage, frequency, SoC. Lower is fresher but uses more API calls. The Growatt cloud refreshes ~once per minute upstream, so values below 1 don't help. Range 1–60.",
-          "slow_scan_interval_minutes": "How often to refresh slow-changing data — kWh totals, settings, chart aggregates. Cached between refreshes and served at the live cadence. Default 5 matches the per-endpoint rate-limit window. Range 1–60."
+          "slow_scan_interval_minutes": "How often to refresh slow-changing data — kWh totals, settings, chart aggregates. Cached between refreshes and served at the live cadence. Default 5 matches the per-endpoint rate-limit window. Range 1–60.",
+          "sph_data_source": "Standard uses sph_system_status (the original endpoint). Detailed uses sph_all_params, which adds per-string PV currents, battery and inverter temperatures, backup output, and load voltage; it also returns grid-import totals so the chart endpoint isn't called. Pick Detailed if you want the extra sensors."
+        }
+      }
+    },
+    "selector": {
+      "sph_data_source": {
+        "options": {
+          "standard": "Standard",
+          "detailed": "Detailed"
         }
       }
     }

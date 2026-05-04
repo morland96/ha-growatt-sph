@@ -43,7 +43,7 @@ class GrowattSelectEntityDescription(SelectEntityDescription):
 SPH_CLASSIC_SELECT_TYPES: tuple[GrowattSelectEntityDescription, ...] = (
     GrowattSelectEntityDescription(
         key="sph_sys_work_mode",
-        name="System work mode",
+        translation_key="sph_sys_work_mode",
         api_key="sys_work_mode",
         options=list(SYS_WORK_MODE_OPTIONS.keys()),
         options_map=SYS_WORK_MODE_OPTIONS,
