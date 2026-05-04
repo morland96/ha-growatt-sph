@@ -271,6 +271,65 @@ def async_setup_services(hass: HomeAssistant) -> None:
         )
         return await coordinator.read_ac_discharge_times()
 
+    async def handle_set_sph_parameter(call: ServiceCall) -> dict[str, Any]:
+        """Set an arbitrary SPH parameter via the classic mobile API.
+
+        Targets newer SPH/SPM models reached through newTcpsetAPI.do?op=sphSet.
+        Use the diagnostic settings sensors to discover supported `setting`
+        keys and current values; consult the device documentation for the
+        valid value range of each setting.
+        """
+        device_id = call.data["device_id"]
+        # Locate the classic-mode SPH coordinator.
+        device_registry = dr.async_get(hass)
+        device_entry = device_registry.async_get(device_id)
+        if not device_entry:
+            raise ServiceValidationError(
+                translation_domain=DOMAIN,
+                translation_key="device_not_found",
+                translation_placeholders={"device_id": device_id},
+            )
+        serial_number = next(
+            (i[1] for i in device_entry.identifiers if i[0] == DOMAIN), None
+        )
+        coord: GrowattCoordinator | None = None
+        for entry in hass.config_entries.async_entries(DOMAIN):
+            if entry.state != ConfigEntryState.LOADED:
+                continue
+            cand = entry.runtime_data.devices.get(serial_number)
+            if (
+                cand is not None
+                and cand.device_type == "sph"
+                and cand.api_version == "classic"
+            ):
+                coord = cand
+                break
+        if coord is None:
+            raise ServiceValidationError(
+                translation_domain=DOMAIN,
+                translation_key="device_not_configured",
+                translation_placeholders={
+                    "device_type": "SPH (classic)",
+                    "device_id": device_id,
+                },
+            )
+
+        setting = call.data["setting"]
+        value = call.data["value"]
+        # Pass value through as-is — the library wraps a scalar into
+        # {"param1": value}. List/dict values are handled too.
+        response = await hass.async_add_executor_job(
+            coord.api.update_sph_inverter_setting,
+            coord.device_id,
+            setting,
+            value,
+        )
+        # Echo new value into coordinator data so dependent sensors update
+        # immediately without waiting for the next poll cycle.
+        coord.data[setting] = value
+        coord.async_set_updated_data(coord.data)
+        return {"response": response}
+
     # Register services without schema - services.yaml will provide UI definition
     # Schema validation happens in the handler functions
     hass.services.async_register(
@@ -313,4 +372,11 @@ def async_setup_services(hass: HomeAssistant) -> None:
         "read_ac_discharge_times",
         handle_read_ac_discharge_times,
         supports_response=SupportsResponse.ONLY,
+    )
+
+    hass.services.async_register(
+        DOMAIN,
+        "set_sph_parameter",
+        handle_set_sph_parameter,
+        supports_response=SupportsResponse.OPTIONAL,
     )

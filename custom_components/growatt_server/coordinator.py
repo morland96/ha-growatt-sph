@@ -212,7 +212,12 @@ class GrowattCoordinator(DataUpdateCoordinator[dict[str, Any]]):
                 sph_overview = self.api.sph_energy_overview(
                     self.plant_id, self.device_id
                 )
-                self.data = {**sph_status, **sph_overview}
+                # Settings bean — exposes ~149 adjustable parameters such
+                # as sys_work_mode, cutoff_soc, cuton_soc, zero export
+                # flags, charge/discharge current limits, etc. Used by
+                # diagnostic sensors and the set_sph_parameter service.
+                sph_settings = self.api.sph_settings(self.device_id)
+                self.data = {**sph_status, **sph_overview, **sph_settings}
             _LOGGER.debug(
                 "sph_info for device %s: %r", self.device_id, self.data
             )

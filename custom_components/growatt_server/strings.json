@@ -832,6 +832,24 @@
         }
       },
       "name": "Write AC discharge times"
+    },
+    "set_sph_parameter": {
+      "name": "Set SPH parameter",
+      "description": "Write any classic-mode SPH parameter via newTcpsetAPI.do?op=sphSet. Use the diagnostic settings sensors to discover supported keys (e.g. sys_work_mode, cutoff_soc, cuton_soc, zero_ct_sell, bat_max_charge_current). Consult device documentation for the valid value range of each parameter.",
+      "fields": {
+        "device_id": {
+          "name": "Device",
+          "description": "The SPH device whose parameter you want to set."
+        },
+        "setting": {
+          "name": "Parameter name",
+          "description": "Setting key (e.g. sys_work_mode)."
+        },
+        "value": {
+          "name": "Value",
+          "description": "New value. Will be sent as param1."
+        }
+      }
     }
   },
   "title": "Growatt Server"

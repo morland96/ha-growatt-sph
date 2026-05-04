@@ -1,13 +1,16 @@
 """Sensor definitions for SPH devices accessed via the classic mobile API.
 
-The keys here mirror the response shape of `sph_system_status` and
-`sph_energy_overview` (newTwoSphAPI.do), which is distinct from the V1
-OpenAPI's sph_detail/sph_energy response — hence the separate set.
+The keys here mirror the response shape of `sph_system_status`,
+`sph_energy_overview`, and `sph_settings` (newTwoSphAPI.do), which is
+distinct from the V1 OpenAPI's sph_detail/sph_energy response — hence
+the separate set.
 """
 
 from homeassistant.components.sensor import SensorDeviceClass, SensorStateClass
 from homeassistant.const import (
     PERCENTAGE,
+    EntityCategory,
+    UnitOfElectricCurrent,
     UnitOfElectricPotential,
     UnitOfEnergy,
     UnitOfFrequency,
@@ -200,5 +203,63 @@ SPH_CLASSIC_SENSOR_TYPES: tuple[GrowattSensorEntityDescription, ...] = (
         device_class=SensorDeviceClass.ENERGY,
         state_class=SensorStateClass.TOTAL_INCREASING,
         never_resets=True,
+    ),
+
+    # --- Settings (diagnostic, read-only) ---------------------------
+    # Exposed so values are visible in HA. To change them use the
+    # `growatt_server.set_sph_parameter` service.
+    GrowattSensorEntityDescription(
+        key="sph_setting_sys_work_mode",
+        name="System work mode",
+        api_key="sys_work_mode",
+        entity_category=EntityCategory.DIAGNOSTIC,
+    ),
+    GrowattSensorEntityDescription(
+        key="sph_setting_pv_on_off",
+        name="PV output enabled",
+        api_key="pv_on_off",
+        entity_category=EntityCategory.DIAGNOSTIC,
+    ),
+    GrowattSensorEntityDescription(
+        key="sph_setting_cutoff_soc",
+        name="Discharge cutoff SoC",
+        api_key="cutoff_soc",
+        native_unit_of_measurement=PERCENTAGE,
+        entity_category=EntityCategory.DIAGNOSTIC,
+    ),
+    GrowattSensorEntityDescription(
+        key="sph_setting_cuton_soc",
+        name="Charge cutoff SoC",
+        api_key="cuton_soc",
+        native_unit_of_measurement=PERCENTAGE,
+        entity_category=EntityCategory.DIAGNOSTIC,
+    ),
+    GrowattSensorEntityDescription(
+        key="sph_setting_bat_max_charge_current",
+        name="Battery max charge current",
+        api_key="bat_max_charge_current",
+        native_unit_of_measurement=UnitOfElectricCurrent.AMPERE,
+        device_class=SensorDeviceClass.CURRENT,
+        entity_category=EntityCategory.DIAGNOSTIC,
+    ),
+    GrowattSensorEntityDescription(
+        key="sph_setting_bat_max_discharge_current",
+        name="Battery max discharge current",
+        api_key="bat_max_discharge_current",
+        native_unit_of_measurement=UnitOfElectricCurrent.AMPERE,
+        device_class=SensorDeviceClass.CURRENT,
+        entity_category=EntityCategory.DIAGNOSTIC,
+    ),
+    GrowattSensorEntityDescription(
+        key="sph_setting_zero_ct_sell",
+        name="Zero export at CT",
+        api_key="zero_ct_sell",
+        entity_category=EntityCategory.DIAGNOSTIC,
+    ),
+    GrowattSensorEntityDescription(
+        key="sph_setting_zero_load_sell",
+        name="Zero export at load meter",
+        api_key="zero_load_sell",
+        entity_category=EntityCategory.DIAGNOSTIC,
     ),
 )
