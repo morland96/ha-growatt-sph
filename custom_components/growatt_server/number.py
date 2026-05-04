@@ -6,7 +6,7 @@ import logging
 from growattServer import GrowattV1ApiError
 
 from homeassistant.components.number import NumberEntity, NumberEntityDescription
-from homeassistant.const import PERCENTAGE, EntityCategory
+from homeassistant.const import PERCENTAGE, EntityCategory, UnitOfPower
 from homeassistant.core import HomeAssistant
 from homeassistant.exceptions import HomeAssistantError
 from homeassistant.helpers.device_registry import DeviceInfo
@@ -87,6 +87,20 @@ MIN_NUMBER_TYPES: tuple[GrowattNumberEntityDescription, ...] = (
     ),
 )
 
+# Classic-mode SPH number entities — written via update_sph_inverter_setting().
+SPH_CLASSIC_NUMBER_TYPES: tuple[GrowattNumberEntityDescription, ...] = (
+    GrowattNumberEntityDescription(
+        key="sph_max_sell_power",
+        name="Max sell power",
+        api_key="psell_max",
+        native_unit_of_measurement=UnitOfPower.WATT,
+        native_step=100,
+        native_min_value=0,
+        # SPM-class inverters top out around 10 kW; allow some headroom.
+        native_max_value=15000,
+    ),
+)
+
 
 async def async_setup_entry(
     hass: HomeAssistant,
@@ -105,6 +119,16 @@ async def async_setup_entry(
             and device_coordinator.api_version == "v1"
         )
         for description in MIN_NUMBER_TYPES
+    )
+    # Classic-mode SPH numbers.
+    async_add_entities(
+        GrowattNumber(device_coordinator, description)
+        for device_coordinator in runtime_data.devices.values()
+        if (
+            device_coordinator.device_type == "sph"
+            and device_coordinator.api_version == "classic"
+        )
+        for description in SPH_CLASSIC_NUMBER_TYPES
     )
 
 
@@ -148,13 +172,20 @@ class GrowattNumber(CoordinatorEntity[GrowattCoordinator], NumberEntity):
         int_value = int(value)
 
         try:
-            # Use V1 API to write parameter
-            await self.hass.async_add_executor_job(
-                self.coordinator.api.min_write_parameter,
-                self.coordinator.device_id,
-                parameter_id,
-                int_value,
-            )
+            if self.coordinator.api_version == "v1":
+                await self.hass.async_add_executor_job(
+                    self.coordinator.api.min_write_parameter,
+                    self.coordinator.device_id,
+                    parameter_id,
+                    int_value,
+                )
+            else:
+                await self.hass.async_add_executor_job(
+                    self.coordinator.api.update_sph_inverter_setting,
+                    self.coordinator.device_id,
+                    parameter_id,
+                    int_value,
+                )
         except GrowattV1ApiError as e:
             raise HomeAssistantError(
                 translation_domain=DOMAIN,

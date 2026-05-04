@@ -30,6 +30,11 @@ class GrowattSwitchEntityDescription(SwitchEntityDescription):
 
     api_key: str
     write_key: str | None = None  # Parameter ID for writing (if different from api_key)
+    # When True, the on/off displayed in HA is the logical inverse of the
+    # raw API value. Used for "zero export" flags where API value 0 means
+    # selling-allowed (= switch ON in user's mental model) and 1 means
+    # selling-blocked (= switch OFF).
+    invert: bool = False
 
 
 # Note that the Growatt V1 API uses different keys for reading and writing parameters.
@@ -41,6 +46,22 @@ MIN_SWITCH_TYPES: tuple[GrowattSwitchEntityDescription, ...] = (
         translation_key="ac_charge",
         api_key="acChargeEnable",  # Key returned by V1 API
         write_key="ac_charge",  # Key used to write parameter
+    ),
+)
+
+# Classic-mode SPH switch entities — write via update_sph_inverter_setting().
+# Despite the misleading "zero_*_sell" field names, the polarity matches
+# user expectation directly: 1 = sell-back enabled, 0 = disabled.
+SPH_CLASSIC_SWITCH_TYPES: tuple[GrowattSwitchEntityDescription, ...] = (
+    GrowattSwitchEntityDescription(
+        key="sph_pv_sell_back_home",
+        name="PV sell-back (home load)",
+        api_key="zero_ct_sell",
+    ),
+    GrowattSwitchEntityDescription(
+        key="sph_pv_sell_back_backup",
+        name="PV sell-back (backup load)",
+        api_key="zero_load_sell",
     ),
 )
 
@@ -62,6 +83,16 @@ async def async_setup_entry(
             and device_coordinator.api_version == "v1"
         )
         for description in MIN_SWITCH_TYPES
+    )
+    # Classic-mode SPH switches.
+    async_add_entities(
+        GrowattSwitch(device_coordinator, description)
+        for device_coordinator in runtime_data.devices.values()
+        if (
+            device_coordinator.device_type == "sph"
+            and device_coordinator.api_version == "classic"
+        )
+        for description in SPH_CLASSIC_SWITCH_TYPES
     )
 
 
@@ -95,8 +126,11 @@ class GrowattSwitch(CoordinatorEntity[GrowattCoordinator], SwitchEntity):
         if value is None:
             return None
 
-        # API returns integer 1 for enabled, 0 for disabled
-        return bool(value)
+        # API returns integer 1 for enabled, 0 for disabled (string or int)
+        on = bool(int(value))
+        if self.entity_description.invert:
+            on = not on
+        return on
 
     async def async_turn_on(self, **kwargs: Any) -> None:
         """Turn the switch on."""
@@ -112,16 +146,25 @@ class GrowattSwitch(CoordinatorEntity[GrowattCoordinator], SwitchEntity):
         parameter_id = (
             self.entity_description.write_key or self.entity_description.api_key
         )
-        api_value = int(state)
+        # If `invert` is set, the user-facing on/off is the logical inverse
+        # of the underlying API field's value.
+        api_value = int(state ^ self.entity_description.invert)
 
         try:
-            # Use V1 API to write parameter
-            await self.hass.async_add_executor_job(
-                self.coordinator.api.min_write_parameter,
-                self.coordinator.device_id,
-                parameter_id,
-                api_value,
-            )
+            if self.coordinator.api_version == "v1":
+                await self.hass.async_add_executor_job(
+                    self.coordinator.api.min_write_parameter,
+                    self.coordinator.device_id,
+                    parameter_id,
+                    api_value,
+                )
+            else:
+                await self.hass.async_add_executor_job(
+                    self.coordinator.api.update_sph_inverter_setting,
+                    self.coordinator.device_id,
+                    parameter_id,
+                    api_value,
+                )
         except GrowattV1ApiError as e:
             raise HomeAssistantError(
                 translation_domain=DOMAIN,

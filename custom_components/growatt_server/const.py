@@ -61,7 +61,7 @@ DEFAULT_URL = "other_regions"
 
 DOMAIN = "growatt_server"
 
-PLATFORMS = [Platform.NUMBER, Platform.SENSOR, Platform.SWITCH]
+PLATFORMS = [Platform.NUMBER, Platform.SELECT, Platform.SENSOR, Platform.SWITCH]
 
 # Growatt Classic API error codes
 LOGIN_INVALID_AUTH_CODE = "502"
