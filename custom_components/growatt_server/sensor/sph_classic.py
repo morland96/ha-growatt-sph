@@ -60,7 +60,7 @@ SPH_CLASSIC_SENSOR_TYPES: tuple[GrowattSensorEntityDescription, ...] = (
     # --- PV ---
     GrowattSensorEntityDescription(
         key="sph_pv_power",
-        translation_key="mix_wattage_pv_all",
+        translation_key="sph_pv_power",
         api_key="ppv",
         native_unit_of_measurement=UnitOfPower.KILO_WATT,
         device_class=SensorDeviceClass.POWER,
@@ -68,14 +68,14 @@ SPH_CLASSIC_SENSOR_TYPES: tuple[GrowattSensorEntityDescription, ...] = (
     ),
     GrowattSensorEntityDescription(
         key="sph_pv1_voltage",
-        translation_key="mix_pv1_voltage",
+        translation_key="sph_pv1_voltage",
         api_key="vpv1",
         native_unit_of_measurement=UnitOfElectricPotential.VOLT,
         device_class=SensorDeviceClass.VOLTAGE,
     ),
     GrowattSensorEntityDescription(
         key="sph_pv2_voltage",
-        translation_key="mix_pv2_voltage",
+        translation_key="sph_pv2_voltage",
         api_key="vpv2",
         native_unit_of_measurement=UnitOfElectricPotential.VOLT,
         device_class=SensorDeviceClass.VOLTAGE,
@@ -89,7 +89,7 @@ SPH_CLASSIC_SENSOR_TYPES: tuple[GrowattSensorEntityDescription, ...] = (
     ),
     GrowattSensorEntityDescription(
         key="sph_pv1_power",
-        translation_key="mix_wattage_pv_1",
+        translation_key="sph_pv1_power",
         api_key="ppv1",
         native_unit_of_measurement=UnitOfPower.KILO_WATT,
         device_class=SensorDeviceClass.POWER,
@@ -97,7 +97,7 @@ SPH_CLASSIC_SENSOR_TYPES: tuple[GrowattSensorEntityDescription, ...] = (
     ),
     GrowattSensorEntityDescription(
         key="sph_pv2_power",
-        translation_key="mix_wattage_pv_2",
+        translation_key="sph_pv2_power",
         api_key="ppv2",
         native_unit_of_measurement=UnitOfPower.KILO_WATT,
         device_class=SensorDeviceClass.POWER,

@@ -623,14 +623,35 @@
       "sph_battery_current": {
         "name": "Battery current"
       },
+      "sph_pv_power": {
+        "name": "All PV wattage"
+      },
+      "sph_pv1_voltage": {
+        "name": "PV1 voltage"
+      },
       "sph_pv1_current": {
         "name": "PV1 current"
+      },
+      "sph_pv1_power": {
+        "name": "PV1 wattage"
+      },
+      "sph_pv2_voltage": {
+        "name": "PV2 voltage"
       },
       "sph_pv2_current": {
         "name": "PV2 current"
       },
+      "sph_pv2_power": {
+        "name": "PV2 wattage"
+      },
+      "sph_pv3_voltage": {
+        "name": "PV3 voltage"
+      },
       "sph_pv3_current": {
         "name": "PV3 current"
+      },
+      "sph_pv3_power": {
+        "name": "PV3 wattage"
       },
       "sph_inverter_temperature": {
         "name": "Inverter temperature"
@@ -646,12 +667,6 @@
       },
       "sph_inverter_output_current": {
         "name": "Inverter output current"
-      },
-      "sph_pv3_voltage": {
-        "name": "PV3 voltage"
-      },
-      "sph_pv3_power": {
-        "name": "PV3 wattage"
       }
     },
     "switch": {
