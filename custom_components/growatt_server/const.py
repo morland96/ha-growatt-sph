@@ -5,6 +5,14 @@ from homeassistant.const import Platform
 CONF_PLANT_ID = "plant_id"
 CONF_REGION = "region"
 
+# Polling interval (minutes). Configurable via the integration's
+# Options flow; default 5 matches the previous hardcoded value and the
+# Growatt classic API's per-endpoint rate-limit window.
+CONF_SCAN_INTERVAL_MINUTES = "scan_interval_minutes"
+DEFAULT_SCAN_INTERVAL_MINUTES = 5
+MIN_SCAN_INTERVAL_MINUTES = 1
+MAX_SCAN_INTERVAL_MINUTES = 60
+
 
 # API key support
 CONF_API_KEY = "api_key"

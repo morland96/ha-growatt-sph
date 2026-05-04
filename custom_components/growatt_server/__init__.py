@@ -369,7 +369,20 @@ async def async_setup_entry(
     # Set up all the entities
     await hass.config_entries.async_forward_entry_setups(config_entry, PLATFORMS)
 
+    # Reload when options change so a new scan_interval_minutes takes
+    # effect immediately.
+    config_entry.async_on_unload(
+        config_entry.add_update_listener(_async_options_updated)
+    )
+
     return True
+
+
+async def _async_options_updated(
+    hass: HomeAssistant, config_entry: GrowattConfigEntry
+) -> None:
+    """Reload the config entry when options are updated."""
+    await hass.config_entries.async_reload(config_entry.entry_id)
 
 
 async def async_unload_entry(

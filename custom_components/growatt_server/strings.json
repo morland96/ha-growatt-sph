@@ -852,5 +852,19 @@
       }
     }
   },
-  "title": "Growatt Server"
+  "title": "Growatt Server",
+  "options": {
+    "step": {
+      "init": {
+        "title": "Growatt options",
+        "description": "Tweak how this integration polls the Growatt API.",
+        "data": {
+          "scan_interval_minutes": "Polling interval (minutes)"
+        },
+        "data_description": {
+          "scan_interval_minutes": "How often to fetch fresh data from Growatt (1–60). Lower values give fresher data but increase API load — the default of 5 matches the Growatt API's per-endpoint rate-limit window."
+        }
+      }
+    }
+  }
 }

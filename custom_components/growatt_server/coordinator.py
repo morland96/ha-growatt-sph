@@ -23,6 +23,8 @@ from .const import (
     BATT_MODE_BATTERY_FIRST,
     BATT_MODE_GRID_FIRST,
     BATT_MODE_LOAD_FIRST,
+    CONF_SCAN_INTERVAL_MINUTES,
+    DEFAULT_SCAN_INTERVAL_MINUTES,
     DEFAULT_URL,
     DOMAIN,
     LOGIN_INVALID_AUTH_CODE,
@@ -34,8 +36,6 @@ if TYPE_CHECKING:
     from .sensor.sensor_entity_description import GrowattSensorEntityDescription
 
 type GrowattConfigEntry = ConfigEntry[GrowattRuntimeData]
-
-SCAN_INTERVAL = datetime.timedelta(minutes=5)
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -79,11 +79,16 @@ class GrowattCoordinator(DataUpdateCoordinator[dict[str, Any]]):
         else:
             raise ValueError(f"Unknown API version: {self.api_version}")
 
+        scan_interval_minutes = int(
+            config_entry.options.get(
+                CONF_SCAN_INTERVAL_MINUTES, DEFAULT_SCAN_INTERVAL_MINUTES
+            )
+        )
         super().__init__(
             hass,
             _LOGGER,
             name=f"{DOMAIN} ({device_id})",
-            update_interval=SCAN_INTERVAL,
+            update_interval=datetime.timedelta(minutes=scan_interval_minutes),
             config_entry=config_entry,
         )
 
