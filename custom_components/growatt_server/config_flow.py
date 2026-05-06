@@ -139,6 +139,11 @@ class GrowattServerConfigFlow(ConfigFlow, domain=DOMAIN):
                 )
                 api.server_url = server_url
 
+                _LOGGER.info(
+                    "Growatt classic API login: user=%s url=%s (reauth)",
+                    user_input[CONF_USERNAME],
+                    server_url,
+                )
                 try:
                     login_response = await self.hass.async_add_executor_job(
                         api.login, user_input[CONF_USERNAME], user_input[CONF_PASSWORD]
@@ -276,6 +281,11 @@ class GrowattServerConfigFlow(ConfigFlow, domain=DOMAIN):
         )
         self.api.server_url = server_url
 
+        _LOGGER.info(
+            "Growatt classic API login: user=%s url=%s (config flow)",
+            user_input[CONF_USERNAME],
+            server_url,
+        )
         try:
             login_response = await self.hass.async_add_executor_job(
                 self.api.login, user_input[CONF_USERNAME], user_input[CONF_PASSWORD]

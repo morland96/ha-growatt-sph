@@ -11,5 +11,5 @@
   "requirements": [
     "growattServer @ git+https://github.com/morland96/PyPi_GrowattServer.git@v2.1.0+sph-all-params.1"
   ],
-  "version": "2.1.3"
+  "version": "2.1.4"
 }

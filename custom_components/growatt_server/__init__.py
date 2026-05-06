@@ -6,7 +6,12 @@ Classic API (username/password):
 - Authenticates via api.login(), which returns a dict with a "success" key.
 - Auth failure is signalled by success=False and msg="502" (LOGIN_INVALID_AUTH_CODE).
 - A failed login does NOT raise an exception — the return value must be checked.
-- The coordinator calls api.login() on every update cycle to maintain the session.
+- A single authenticated GrowattApi instance (with its requests.Session cookie)
+  is created in async_setup_entry and shared across all coordinators for the
+  config entry. Coordinators do NOT re-login per update cycle — the session
+  cookie persists. On call failure that suggests session expiry (RequestException
+  or JSONDecodeError), the coordinator transparently re-logs in and retries once.
+  This avoids the per-cycle login storm that triggered Growatt anti-abuse 507s.
 
 Open API V1 (API token):
 - Stateless — no login call, token is sent as a Bearer header on every request.
@@ -222,6 +227,9 @@ def _login_classic_api(
     api: growattServer.GrowattApi, username: str, password: str
 ) -> dict:
     """Log in to Classic API and return user info."""
+    _LOGGER.info(
+        "Growatt classic API login: user=%s url=%s", username, api.server_url
+    )
     try:
         login_response = api.login(username, password)
     except (RequestException, JSONDecodeError) as ex:
@@ -339,15 +347,23 @@ async def async_setup_entry(
     else:
         raise ConfigEntryError("Unknown authentication type in config entry.")
 
-    # Create a coordinator for the total sensors
+    # Create a coordinator for the total sensors. The authenticated `api`
+    # instance (already logged in for classic, or token-bearing for V1) is
+    # shared across every coordinator for this config entry, so we don't
+    # re-login or open a new requests.Session per coordinator.
     total_coordinator = GrowattCoordinator(
-        hass, config_entry, plant_id, "total", plant_id
+        hass, config_entry, plant_id, "total", plant_id, api=api
     )
 
     # Create coordinators for each device
     device_coordinators = {
         device["deviceSn"]: GrowattCoordinator(
-            hass, config_entry, device["deviceSn"], device["deviceType"], plant_id
+            hass,
+            config_entry,
+            device["deviceSn"],
+            device["deviceType"],
+            plant_id,
+            api=api,
         )
         for device in devices
         if device["deviceType"] in ["inverter", "tlx", "storage", "mix", "min", "sph"]

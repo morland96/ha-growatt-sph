@@ -1,11 +1,13 @@
 """Coordinator module for managing Growatt data fetching."""
 
 import datetime
+from json import JSONDecodeError
 import json
 import logging
 from typing import TYPE_CHECKING, Any
 
 import growattServer
+from requests import RequestException
 
 from homeassistant.components.sensor import SensorStateClass
 from homeassistant.config_entries import ConfigEntry
@@ -152,8 +154,16 @@ class GrowattCoordinator(DataUpdateCoordinator[dict[str, Any]]):
         device_id: str,
         device_type: str,
         plant_id: str,
+        api: growattServer.GrowattApi | growattServer.OpenApiV1,
     ) -> None:
-        """Initialize the coordinator."""
+        """Initialize the coordinator.
+
+        `api` is created once in async_setup_entry and shared across every
+        coordinator for the config entry — for classic it is already logged
+        in, for V1 it carries the bearer token. We do not build a fresh api
+        per coordinator (that previously triggered one login per coordinator
+        per cycle and got accounts blocked with 507s).
+        """
         self.api_version = (
             "v1" if config_entry.data.get("auth_type") == "api_token" else "classic"
         )
@@ -175,22 +185,16 @@ class GrowattCoordinator(DataUpdateCoordinator[dict[str, Any]]):
         )
         self._cached_slow_data: dict[str, Any] = {}
         self._last_slow_refresh: datetime.datetime | None = None
+        self.api = api
+        self.url = config_entry.data.get(CONF_URL, DEFAULT_URL)
 
         if self.api_version == "v1":
             self.username = None
             self.password = None
-            self.url = config_entry.data.get(CONF_URL, DEFAULT_URL)
             self.token = config_entry.data["token"]
-            self.api = growattServer.OpenApiV1(token=self.token)
-            self.api.server_url = self.url
         elif self.api_version == "classic":
             self.username = config_entry.data.get(CONF_USERNAME)
             self.password = config_entry.data[CONF_PASSWORD]
-            self.url = config_entry.data.get(CONF_URL, DEFAULT_URL)
-            self.api = growattServer.GrowattApi(
-                add_random_user_id=True, agent_identifier=self.username
-            )
-            self.api.server_url = self.url
         else:
             raise ValueError(f"Unknown API version: {self.api_version}")
 
@@ -207,20 +211,48 @@ class GrowattCoordinator(DataUpdateCoordinator[dict[str, Any]]):
             config_entry=config_entry,
         )
 
-    def _sync_update_data(self) -> dict[str, Any]:
-        """Update data via library synchronously."""
-        _LOGGER.debug("Updating data for %s (%s)", self.device_id, self.device_type)
+    def _classic_login(self) -> None:
+        """Re-authenticate the shared classic API session.
 
-        # login only required for classic API
-        if self.api_version == "classic":
-            login_response = self.api.login(self.username, self.password)
-            if not login_response.get("success"):
-                msg = login_response.get("msg", "Unknown error")
-                if msg == LOGIN_INVALID_AUTH_CODE:
-                    raise ConfigEntryAuthFailed(
-                        "Username, password, or URL may be incorrect"
-                    )
-                raise UpdateFailed(f"Growatt login failed: {msg}")
+        Called once at setup (from async_setup_entry via _login_classic_api)
+        and again only when a request fails in a way that suggests the
+        session cookie expired. Every call is logged at INFO so login
+        frequency is visible in the HA log.
+        """
+        _LOGGER.info(
+            "Growatt classic API login: user=%s url=%s", self.username, self.url
+        )
+        login_response = self.api.login(self.username, self.password)
+        if not login_response.get("success"):
+            msg = login_response.get("msg", "Unknown error")
+            if msg == LOGIN_INVALID_AUTH_CODE:
+                raise ConfigEntryAuthFailed(
+                    "Username, password, or URL may be incorrect"
+                )
+            raise UpdateFailed(f"Growatt login failed: {msg}")
+
+    def _sync_update_data(self) -> dict[str, Any]:
+        """Update data via library synchronously.
+
+        Classic-only retry: if the call fails with a network/parse error
+        (typical signature when the session cookie has expired and the
+        server returns an HTML login page), re-login once and retry.
+        """
+        try:
+            return self._do_update()
+        except (RequestException, JSONDecodeError) as err:
+            if self.api_version != "classic":
+                raise
+            _LOGGER.warning(
+                "Growatt classic API call failed (%s) — re-logging in and retrying",
+                err,
+            )
+            self._classic_login()
+            return self._do_update()
+
+    def _do_update(self) -> dict[str, Any]:
+        """Fetch data for the device. Assumes session/token is valid."""
+        _LOGGER.debug("Updating data for %s (%s)", self.device_id, self.device_type)
 
         if self.device_type == "total":
             if self.api_version == "v1":
